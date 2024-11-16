@@ -7,6 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.v1.routes import api_router
 from src.core.config import Settings, settings
 from src.database.session import init_db
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+logger = logging.getLogger(__name__)
 
 
 class App:
@@ -37,6 +42,7 @@ class App:
 
     @asynccontextmanager
     async def lifespan(self, app: FastAPI):
+        logger.info("Calling init DB...")
         init_db()
         yield
 
