@@ -1,4 +1,4 @@
-from models.base import Base
+from src.models.base import Base
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import (
@@ -17,40 +17,48 @@ from sqlalchemy.sql import func
 
 class Tournament(Base):
     __tablename__ = "tournaments"
-    id = Column(UUID(as_uuid=True), 
-                primary_key=True, 
-                default=uuid.uuid4,
-                unique=True,
-                nullable=False,)
-    name = Column(String,
-                  unique=True,
-                  nullable=False)
-    tournament_format = Column(String,
-                               index=True,
-                               nullable=False)
-    match_format = Column(String,
-                          nullable=False)
-    start_date = Column(DateTime, 
-                        nullable=False)
-    end_date = Column(DateTime,
-                      nullable=False)
-    prize = Column(Integer, 
-                   nullable=False)
-    matches = relationship("Match", back_populates="tournament") # Add in class Match - tournament = relationship("Tournament", back_populates="matches")
-    participants = relationship("Participant", back_populates="tournament") # Add in class Participant - tournament = relationship("Tournament", back_populates="participants")
-    winner = Column(UUID(as_uuid=True), 
-                    ForeignKey("participants.id"), 
-                    nullable=True)
-    
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False,
+    )
+    name = Column(String(50), unique=True, nullable=False)
+    format_id = Column(Integer, ForeignKey("tournament_format.id"), nullable=False)
+    match_format_id = Column(Integer, ForeignKey("match_type.id"), nullable=False)
+    start_time = Column(DateTime, nullable=False)
+    end_time = Column(DateTime, nullable=False)
+    prize = Column(Integer, nullable=False)
+    win_points = Column(Integer, nullable=True)
+    draw_points = Column(Integer, nullable=True)
 
-    @validates("tournament_format", "match_format")
-    def validate_fields(self, key, value):
-        if key == "tournament_format" and value not in ["league", "knockout"]:
-            raise ValueError("Tournament format must be 'league' or 'knockout'")
-        if key == "match_format" and value not in ["time", "score"]: # Assumption for the names
-            raise ValueError("Match format must be 'time' or 'score'")
-        return value
-    
-    
+    matches = relationship(
+        "Match", back_populates="tournament"
+    )  # To add in class Match -> tournament = relationship("Tournament", back_populates="matches")
+    participants = relationship(
+        "Player", secondary="TournamentParticipants", back_populates="tournament"
+    )  # To add in class Player -> tournament = relationship("Tournament", secondary="TournamentParticipants", back_populates="participants")
+
     def __repr__(self):
-        return f"Tournament '{self.name}', start date '{self.start_date}', end date '{self.end_date}')"
+        return f"Tournament '{self.name}', start date '{self.start_time}', end date '{self.end_time}')"
+
+
+class TournamentParticipants(Base):
+    __tablename__ = "tournament_participants"
+    tournament_id = Column(UUID, ForeignKey("tournaments.id"), primary_key=True)
+    player_id = Column(UUID, ForeignKey("players.id"), primary_key=True)
+    score = Column(Integer, nullable=True)
+    stage = Column(String(50), nullable=True)
+
+
+class TournamentFormat(Base):
+    __tablename__ = "tournament_format"
+    id = Column(
+        Integer,
+        primary_key=True,
+        unique=True,
+        nullable=False,
+        autoincrement=True,
+    )
+    name = Column(String(10), unique=True, nullable=False)
