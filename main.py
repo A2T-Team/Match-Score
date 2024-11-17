@@ -9,7 +9,7 @@ from src.core.config import Settings, settings
 from src.database.session import init_db
 import logging
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s")
 
 logger = logging.getLogger(__name__)
 

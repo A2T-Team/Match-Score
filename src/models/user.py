@@ -60,5 +60,5 @@ class Player(Base):
     author_id = Column(UUID, ForeignKey("users.id"), nullable=True)
 
     tournament = relationship(
-        "Tournament", secondary="TournamentParticipants", back_populates="participants"
+        "Tournament", secondary="tournament_participants", back_populates="participants"
     )
