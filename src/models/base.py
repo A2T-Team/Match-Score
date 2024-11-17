@@ -14,7 +14,7 @@ class BaseMixin:
     All models should inherit from this class.
     """
 
-    uuid = Column(
+    id = Column(
         UUID(as_uuid=True),
         primary_key=True,
         index=True,

@@ -26,7 +26,7 @@ class Tournament(Base):
     )
     name = Column(String(50), unique=True, nullable=False)
     format_id = Column(Integer, ForeignKey("tournament_format.id"), nullable=False)
-    match_format_id = Column(Integer, ForeignKey("match_type.id"), nullable=False)
+    match_format_id = Column(Integer, ForeignKey("match_format.id"), nullable=False)
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
     prize = Column(Integer, nullable=False)

@@ -3,7 +3,10 @@ from sqlalchemy.orm import sessionmaker
 
 from src.core.config import settings
 from src.models.base import Base
-from src.models.tournament import Tournament
+# import all models in order init_db to create the tables
+from src.models.tournament import Tournament, TournamentFormat, TournamentParticipants
+from src.models.match import MatchFormat
+from src.models.user import User, Team, Player
 
 import logging
 logger = logging.getLogger(__name__)
