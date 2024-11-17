@@ -1,6 +1,6 @@
 from typing import Generator
 
-from database.session import SessionLocal
+from src.database.session import SessionLocal
 
 
 def get_db() -> Generator:

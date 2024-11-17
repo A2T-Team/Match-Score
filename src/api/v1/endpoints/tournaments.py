@@ -1,16 +1,22 @@
 from fastapi import APIRouter, Depends, Query, Path
-from schemas.tournament import CreateTournamentRequest
+from src.schemas.tournament import CreateTournamentRequest
+from psycopg2.errors import UniqueViolation
+from sqlalchemy.exc import IntegrityError
+from src.common.custom_responses import AlreadyExists, InternalServerError
 from sqlalchemy.orm import Session
-from deps import get_db
-from crud.tournaments import create
+from src.api.deps import get_db
+from src.crud import tournaments
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-tournament_router = APIRouter(prefix="/api/v1/tournament", tags=["Tournament"])
+router = APIRouter()
 
 
-@tournament_router.post("/", status_code=201)
+@router.post("/", status_code=200)
 def create_tournament(
-    tournament: CreateTournamentRequest, db: Session = Depends(get_db) #current_user_id: int = Depends(get_current_user)
+    tournament: CreateTournamentRequest, db_session: Session = Depends(get_db) #current_user_id: int = Depends(get_current_user)
 ):
     """
     Create new tournament with the provided details. Access is restricted to users
@@ -34,10 +40,14 @@ def create_tournament(
     Returns:
         Response: details containing the created tournament or appropriate error messages.
     """
+    try:
+        return tournaments.create(tournament=tournament, db_session=db_session)
+    
+    except IntegrityError as e:
+        if isinstance(e.orig, UniqueViolation):
+            if "tournaments_name_key" in str(e.orig):
+                return AlreadyExists(f"Tournament with name '{tournament.name}'")
+            else:
+                return InternalServerError(f"An unexpected integrity error occurred: {str(e)}") 
+        return InternalServerError(f"Database error: {str(e)}") 
 
-    return create(tournament=tournament, db=db)
-
-
-@tournament_router.get("/")
-def read_users():
-    pass

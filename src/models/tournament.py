@@ -32,12 +32,13 @@ class Tournament(Base):
     prize = Column(Integer, nullable=False)
     win_points = Column(Integer, nullable=True)
     draw_points = Column(Integer, nullable=True)
+    author_id = Column(UUID, ForeignKey("users.id"), nullable=False)
 
     matches = relationship(
         "Match", back_populates="tournament"
     )  # To add in class Match -> tournament = relationship("Tournament", back_populates="matches")
     participants = relationship(
-        "Player", secondary="TournamentParticipants", back_populates="tournament"
+        "Player", secondary="tournament_participants", back_populates="tournament"
     )  # To add in class Player -> tournament = relationship("Tournament", secondary="TournamentParticipants", back_populates="participants")
 
     def __repr__(self):

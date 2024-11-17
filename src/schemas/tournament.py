@@ -1,6 +1,7 @@
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, FieldValidationInfo
 from typing import Optional
+import uuid
 
 
 class CreateTournamentRequest(BaseModel):
@@ -19,6 +20,9 @@ class CreateTournamentRequest(BaseModel):
     )
     draw_points: int = Field(
         ge=0, description="How many points the players get on draw"
+    )
+    author_id: uuid.UUID = Field(
+        description="Author ID"
     )
 
     @field_validator("format")
@@ -45,8 +49,8 @@ class CreateTournamentRequest(BaseModel):
         return value
 
     @field_validator("end_time", mode="before")
-    def validate_end_time(cls, value, values):
-        # values is a dictionary that contains all the previously validated field values
+    def validate_end_time(cls, value, info: FieldValidationInfo):
+        # info.data is a dictionary that contains all the previously validated field values
         # of the model up to that point.
         if isinstance(value, str):
             try:
@@ -54,7 +58,7 @@ class CreateTournamentRequest(BaseModel):
             except ValueError:
                 raise ValueError("Expected format is 'YYYY/MM/DD HH:MM'")
 
-        start_time = values.get("start_time")
+        start_time = info.data.get("start_time")
 
         if start_time and value < start_time:
             raise ValueError("End date cannot be before the start date.")
