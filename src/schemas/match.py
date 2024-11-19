@@ -3,27 +3,18 @@ from pydantic import BaseModel, Field, field_validator, FieldValidationInfo
 from typing import Optional
 import uuid
 
-
 class CreateMatchRequest(BaseModel):
-    #name: str = Field(min_length=5, max_length=50, examples=["Black Doll Winter 2024"])
     format: str = Field(examples=["Format must be 'time' or 'score'"])
-    # match_format: str = Field(
-    #     examples=["Format must be 'time' or 'score'"]  # names are suggestion
-    # )
-    player_a: int = Field(description=["First player ID"])
-    player_b: int = Field(description=["Second player ID"])
+    player_a: uuid.UUID = Field(description="First player ID")
+    player_b: uuid.UUID = Field(description="Second player ID")
     score_a: int = Field(ge=0, examples=["Score must be 0 or positive"])
     score_b: int = Field(ge=0, examples=["Score must be 0 or positive"])
-    result_code: str = Field(examples=["Result must be 'player 1' , 'player 2' or 'draw'"])
-    start_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM"])
+    result_code: str = Field(examples=["Result must be 'player 1', 'player 2', or 'draw'"])
+    start_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM'"])
     end_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM'"])
-    prize: int = Field(
-        ge=0, description="Prize for the match, must be 0 or positive"
-    )
-    author_id: uuid.UUID = Field(
-        description="Author ID"
-    )
-    tournament_id: int = Field(description=["Tournament ID"])
+    prize: int = Field(ge=0, description="Prize for the match, must be 0 or positive")
+    author_id: uuid.UUID = Field(description="Author ID")
+    tournament_id: uuid.UUID = Field(description="Tournament ID")
 
     @field_validator("format")
     def validate_format(cls, value):
@@ -32,9 +23,9 @@ class CreateMatchRequest(BaseModel):
         return value
 
     @field_validator("result_code")
-    def validate_match_format(cls, value):
+    def validate_result_code(cls, value):
         if value not in ["player 1", "player 2", "draw"]:
-            raise ValueError("Result format must be 'player 1' , 'player 2' or 'draw'")
+            raise ValueError("Result must be 'player 1', 'player 2', or 'draw'")
         return value
 
     @field_validator("start_time", mode="before")
@@ -50,8 +41,6 @@ class CreateMatchRequest(BaseModel):
 
     @field_validator("end_time", mode="before")
     def validate_end_time(cls, value, info: FieldValidationInfo):
-        # info.data is a dictionary that contains all the previously validated field values
-        # of the model up to that point.
         if isinstance(value, str):
             try:
                 value = datetime.strptime(value, r"%Y/%m/%d %H:%M")
@@ -66,3 +55,24 @@ class CreateMatchRequest(BaseModel):
             raise ValueError("End date cannot be in the past.")
 
         return value
+
+    @field_validator("player_b")
+    def validate_different_players(cls, player_b, info: FieldValidationInfo):
+        player_a = info.data.get("player_a")
+        if player_a and player_b == player_a:
+            raise ValueError("Player A and Player B cannot be the same.")
+        return player_b
+
+class MatchUpdate(BaseModel):
+    score_a: Optional[int] = None
+    score_b: Optional[int] = None
+    result_code: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+
+class MatchResponse(CreateMatchRequest):
+    id: uuid.UUID = Field(..., description="Unique ID of the match")
+
+    model_config = {
+        "from_attributes": True,  # Enables ORM mode
+    }
