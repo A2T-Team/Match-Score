@@ -62,3 +62,6 @@ class Player(Base):
     tournament = relationship(
         "Tournament", secondary="tournament_participants", back_populates="participants"
     )
+    match = relationship("Match", back_populates="author")
+    author_of_player = relationship("Player", back_populates="author")
+    user_as_player = relationship("Player", back_populates="user")
