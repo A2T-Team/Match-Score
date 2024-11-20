@@ -62,4 +62,4 @@ class TournamentFormat(Base):
         nullable=False,
         autoincrement=True,
     )
-    name = Column(String(10), unique=True, nullable=False)
+    type = Column(String(10), unique=True, nullable=False)

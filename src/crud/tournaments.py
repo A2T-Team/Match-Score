@@ -1,7 +1,9 @@
 from src.schemas.tournament import CreateTournamentRequest
 from src.models.tournament import Tournament
+from src.models.match import Match
 from sqlalchemy.orm import Session
 from src.common.custom_responses import AlreadyExists
+from uuid import UUID 
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,7 +27,7 @@ def create(
 
     Parameters:
         tournament (CreateTournamentRequest): An instance of the `CreateTournamentRequest` class.
-        current_user_id (int): The ID of the user creating the category.
+        current_user_id (UUID): The ID of the user creating the category.
 
     Returns:
         Tournament: An instance of the `Tournament` class with all attributes of the newly created tournament.
@@ -73,3 +75,46 @@ def tournament_name_exists(db: Session, tournament_name: str) -> bool:
         .count()
     )
     return count > 0
+
+
+def get_tournament(db_session: Session, tournament_id: UUID,) -> Tournament | None: #current_user: User = Depends(get_current_user))
+    """
+    Retrieve a tournament by its ID from the database.
+
+    Parameters:
+        db_session (Session): The database session to use for the query.
+        tournament_id (UUID): The ID of the tournament to retrieve.
+
+    Returns:
+        Tournament | None: The tournament object if found, or None if no tournament exists with the given ID.
+    """
+        
+    tournament = db_session.query(Tournament).filter(Tournament.id == tournament_id).first()
+    if tournament is None:
+        return None
+    
+    return tournament
+
+
+def get_matches_in_tournament(db_session: Session, tournament_id: UUID) -> list[Match]:
+    """
+    Retrieve all matches associated with a specific tournament.
+
+    Parameters:
+        db_session (Session): The database session to use for the query.
+        tournament_id (UUID): The ID of the tournament whose matches are to be retrieved.
+
+    Returns:
+        list[Match]: A list of Match objects associated with the specified tournament.
+                     Returns an empty list if no matches are found.
+    """
+
+    matches = (
+        db_session.query(Match)
+        .filter(Match.tournament_id == tournament_id)
+        .all()
+    )
+    if not matches:
+        return []
+    
+    return matches

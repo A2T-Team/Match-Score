@@ -13,28 +13,25 @@ from sqlalchemy.orm import Session
 from src.models.match import Match, MatchFormat, ResultCodes
 from src.models.tournament import Tournament
 from src.models.player import Player
-
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from src.schemas.match import CreateMatchRequest, MatchResponse, MatchUpdate
+from src.crud import matches
+import uuid 
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/matches", tags=["Matches"])
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from src.schemas import CreateMatchRequest, MatchResponse, MatchUpdate
-from src.crud import matches
-import uuid
-
-matches_router = APIRouter(prefix="/matches", tags=["Matches"])
+router = APIRouter()
+# matches_router = APIRouter(prefix="/matches", tags=["Matches"])
 
 
-@matches_router.post("/", response_model=MatchResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=MatchResponse, status_code=status.HTTP_201_CREATED)
 def create_match(request: CreateMatchRequest, db: Session = Depends(get_db)):
     new_match = matches.create_match(db, request)
     return MatchResponse.model_validate(new_match)
 
 
-@matches_router.get("/{match_id}", response_model=MatchResponse)
+@router.get("/{match_id}", response_model=MatchResponse)
 def get_match(match_id: uuid.UUID, db: Session = Depends(get_db)):
     match = matches.read_match_by_id(db, match_id)
     if not match:
@@ -42,13 +39,13 @@ def get_match(match_id: uuid.UUID, db: Session = Depends(get_db)):
     return MatchResponse.model_validate(match)
 
 
-@matches_router.get("/", response_model=list[MatchResponse])
+@router.get("/", response_model=list[MatchResponse])
 def get_all_matches(db: Session = Depends(get_db)):
     matches = matches.read_all_matches(db)
     return [MatchResponse.model_validate(match) for match in matches]
 
 
-@matches_router.patch("/{match_id}", response_model=MatchResponse)
+@router.patch("/{match_id}", response_model=MatchResponse)
 def update_match(match_id: uuid.UUID, updates: MatchUpdate, db: Session = Depends(get_db)):
     match = matches.update_match(db, match_id, updates)
     if not match:
@@ -56,7 +53,7 @@ def update_match(match_id: uuid.UUID, updates: MatchUpdate, db: Session = Depend
     return MatchResponse.model_validate(match)
 
 
-@matches_router.delete("/{match_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{match_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_match(match_id: uuid.UUID, db: Session = Depends(get_db)):
     success = matches.delete_match(db, match_id)
     if not success:

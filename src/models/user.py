@@ -39,29 +39,29 @@ class Team(Base):
     matches_played = Column(Integer, nullable=False, default=0)
 
 
-class Player(Base):
-    __tablename__ = "players"
-    id = Column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
-        unique=True,
-        nullable=False,
-    )
-    first_name = Column(String(50), nullable=False)
-    last_name = Column(String(50), nullable=False)
-    country = Column(String(50), nullable=False)
-    team_id = Column(UUID, ForeignKey("teams.id"), nullable=True)
-    matches_played = Column(Integer, nullable=False, default=0)
-    wins = Column(Integer, nullable=False, default=0)
-    draws = Column(Integer, nullable=False, default=0)
-    losses = Column(Integer, nullable=False, default=0)
-    user_id = Column(UUID, ForeignKey("users.id"), nullable=True)
-    author_id = Column(UUID, ForeignKey("users.id"), nullable=True)
+# class Player(Base):
+#     __tablename__ = "players"
+#     id = Column(
+#         UUID(as_uuid=True),
+#         primary_key=True,
+#         default=uuid.uuid4,
+#         unique=True,
+#         nullable=False,
+#     )
+#     first_name = Column(String(50), nullable=False)
+#     last_name = Column(String(50), nullable=False)
+#     country = Column(String(50), nullable=False)
+#     team_id = Column(UUID, ForeignKey("teams.id"), nullable=True)
+#     matches_played = Column(Integer, nullable=False, default=0)
+#     wins = Column(Integer, nullable=False, default=0)
+#     draws = Column(Integer, nullable=False, default=0)
+#     losses = Column(Integer, nullable=False, default=0)
+#     user_id = Column(UUID, ForeignKey("users.id"), nullable=True)
+#     author_id = Column(UUID, ForeignKey("users.id"), nullable=True)
 
-    tournament = relationship(
-        "Tournament", secondary="tournament_participants", back_populates="participants"
-    )
-    match = relationship("Match", back_populates="author")
-    author_of_player = relationship("Player", back_populates="author")
-    user_as_player = relationship("Player", back_populates="user")
+#     tournament = relationship(
+#         "Tournament", secondary="tournament_participants", back_populates="participants"
+#     )
+#     match = relationship("Match", back_populates="author")
+#     author_of_player = relationship("Player", back_populates="author")
+#     user_as_player = relationship("Player", back_populates="user")
