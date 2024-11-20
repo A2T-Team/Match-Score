@@ -69,6 +69,7 @@ class MatchUpdate(BaseModel):
     result_code: Optional[str] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
+    prize: Optional[int] = None
 
 class MatchResponse(CreateMatchRequest):
     id: uuid.UUID = Field(..., description="Unique ID of the match")

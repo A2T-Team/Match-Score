@@ -42,4 +42,5 @@ class Player(Base):
     user = relationship("User", back_populates="user_as_player")
     matches_as_a = relationship("Match", foreign_keys="[Match.player_a]", back_populates="player_a")
     matches_as_b = relationship("Match", foreign_keys="[Match.player_b]", back_populates="player_b")
+    tournament = relationship("Tournament", secondary="TournamentParticipants", back_populates="participants")
 

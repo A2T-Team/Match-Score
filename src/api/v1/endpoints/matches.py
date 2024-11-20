@@ -1,29 +1,18 @@
-from fastapi import APIRouter, Depends, Query, Path, HTTPException
+from fastapi import APIRouter, Depends, Query, Path, HTTPException, status
 from src.schemas.match import CreateMatchRequest, MatchResponse, MatchUpdate
 from psycopg2.errors import UniqueViolation
 from sqlalchemy.exc import IntegrityError
 from src.common.custom_responses import AlreadyExists, InternalServerError
 from sqlalchemy.orm import Session
 from src.api.deps import get_db
-from typing import List
-from src.crud import tournaments
+from src.crud import matches
 import logging
 import uuid
 from sqlalchemy.orm import Session
-from src.models.match import Match, MatchFormat, ResultCodes
-from src.models.tournament import Tournament
-from src.models.player import Player
 
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/matches", tags=["Matches"])
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from src.schemas import CreateMatchRequest, MatchResponse, MatchUpdate
-from src.crud import matches
-import uuid
 
 matches_router = APIRouter(prefix="/matches", tags=["Matches"])
 
