@@ -15,15 +15,32 @@ from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
 
 
-class User(Base, BaseMixin):
+class Role(Enum):
+
+    """
+    Enum representing the role of a user in the system.
+    """
+
+    USER = "user"
+    PLAYER = "player"
+    DIRECTOR = "director"
+    ADMIN = "admin"
+
+
+class User(Base):
+
     """
     Database model representing "users" table in the database.
     UUID and table name are inherited from BaseMixin.
     """
-    __tablename__ = "users"
 
-    username = Column(String)
+    __tablename__ = "users"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    username = Column(String(50), unique=True, nullable=False)
     password = Column(String)
+    email = Column(String(50), unique=True, nullable=False)
+    country = Column(String(50), nullable=False)
+    role = Column(Role, nullable=False, default=Role.USER)
 
 
 class Team(Base):
