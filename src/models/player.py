@@ -32,13 +32,7 @@ class Player(Base):
     losses = Column(Integer)
     draws = Column(Integer)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    #author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-
-
-
-
-    author = relationship("User", back_populates="author_of_player")
     user = relationship("User", back_populates="user_as_player")
     matches_as_a = relationship("Match", foreign_keys="[Match.player_a]", back_populates="player_a")
     matches_as_b = relationship("Match", foreign_keys="[Match.player_b]", back_populates="player_b")

@@ -28,7 +28,7 @@ class Match(Base):
     player_b = Column(Integer, ForeignKey("players.id"), nullable=False)
     score_a = Column(Integer)
     score_b = Column(Integer)
-    result_code = Column(Integer, ForeignKey("result_codes", nullable=False))
+    result_code = Column(Integer, ForeignKey("result_codes.id"), nullable=False)
     start_time = Column(Integer)
     end_time = Column(Integer)
     prize = Column(Integer)
