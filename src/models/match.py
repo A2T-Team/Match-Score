@@ -32,7 +32,7 @@ class Match(Base):
     start_time = Column(Integer)
     end_time = Column(Integer)
     prize = Column(Integer)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    author_id = Column(UUID, ForeignKey("users.id"), nullable=False)
     tournament_id = Column(UUID, ForeignKey("tournaments.id"), nullable=False)
 
     tournament = relationship("Tournament", back_populates="matches")
