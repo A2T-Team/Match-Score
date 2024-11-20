@@ -63,7 +63,7 @@ def view_tournament(
     if tournament is None:
         return NotFound(f"Tournament ID: {tournament_id}")
 
-    # matches = tournaments.get_matches_in_tournament(db_session, tournament_id)
+    matches = tournaments.get_matches_in_tournament(db_session, tournament_id)
     return {"tournament": tournament.name, 
             "format": "league" if tournament.format_id == 1 else "knockout", 
             "match format": "score" if tournament.match_format_id == 1 else "time",

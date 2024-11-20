@@ -31,7 +31,7 @@ class Player(Base):
     wins = Column(Integer)
     losses = Column(Integer)
     draws = Column(Integer)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID, ForeignKey("users.id"), nullable=False)
 
     user = relationship("User", back_populates="user_as_player")
     matches_as_a = relationship("Match", foreign_keys="[Match.player_a]", back_populates="player_a")
