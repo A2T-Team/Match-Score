@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends, Query, Path
 from src.schemas.tournament import CreateTournamentRequest
 from psycopg2.errors import UniqueViolation
 from sqlalchemy.exc import IntegrityError
-from src.common.custom_responses import AlreadyExists, InternalServerError
+from src.common.custom_responses import AlreadyExists, InternalServerError, NotFound
 from sqlalchemy.orm import Session
 from src.api.deps import get_db
 from src.crud import tournaments
+from uuid import UUID 
 import logging
 
 logger = logging.getLogger(__name__)
@@ -51,3 +52,23 @@ def create_tournament(
                 return InternalServerError(f"An unexpected integrity error occurred: {str(e)}") 
         return InternalServerError(f"Database error: {str(e)}") 
 
+
+@router.get("/{tournament_id}")
+def view_tournament(
+    tournament_id: UUID,
+    db_session: Session = Depends(get_db),
+    #current_user_id: int = Depends(get_current_user),
+):
+    tournament = tournaments.get_tournament(db_session, tournament_id,) #current_user_id)
+    if tournament is None:
+        return NotFound(f"Tournament ID: {tournament_id}")
+
+    # matches = tournaments.get_matches_in_tournament(db_session, tournament_id)
+    return {"tournament": tournament.name, 
+            "format": "league" if tournament.format_id == 1 else "knockout", 
+            "match format": "score" if tournament.match_format_id == 1 else "time",
+            "start time": tournament.start_time,
+            "end time": tournament.end_time,
+            "prize for winner": tournament.prize,}
+            # "total matches": len(matches),}
+            # matches": [topic.title for topic in topics]}
