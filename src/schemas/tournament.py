@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator, FieldValidationInfo
-from typing import Optional
+from typing import Optional, List
 import uuid
 
 
@@ -66,3 +66,17 @@ class CreateTournamentRequest(BaseModel):
             raise ValueError("End date cannot be in the past.")
 
         return value
+
+
+class AddAllTournamentParticipants(BaseModel):
+    participants: List[str] = Field(description="List of all participants", example=["player1_full_name", "player2_full_name"])
+
+
+class UpdateSingleMatchInTournament(BaseModel):
+    tournament_id: uuid.UUID = Field(description="Tournament ID")
+    match_id: uuid.UUID = Field(description="Match ID")
+    participants: List[str] = Field(description="List of all participants", example=["player1_full_name", "player2_full_name"])
+
+class UpdateTournament(BaseModel):
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None

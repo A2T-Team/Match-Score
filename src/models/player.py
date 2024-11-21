@@ -33,7 +33,8 @@ class Player(Base):
     draws = Column(Integer)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False)
 
-    user = relationship("User", back_populates="user_as_player")
-    matches_as_a = relationship("Match", foreign_keys="[Match.player_a]", back_populates="player_a")
-    matches_as_b = relationship("Match", foreign_keys="[Match.player_b]", back_populates="player_b")
+    # user = relationship("User", back_populates="user_as_player")
+    # matches_as_a = relationship("Match", foreign_keys="[Match.player_a]", back_populates="player_a")
+    # matches_as_b = relationship("Match", foreign_keys="[Match.player_b]", back_populates="player_b")
+    tournament = relationship("Tournament", secondary="tournament_participants", back_populates="participants")
 

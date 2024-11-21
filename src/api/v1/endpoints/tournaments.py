@@ -72,3 +72,49 @@ def view_tournament(
             "prize for winner": tournament.prize,}
             # "total matches": len(matches),}
             # matches": [topic.title for topic in topics]}
+
+
+@router.get("/")
+def view_all_tournaments(
+    skip: int = 0,
+    limit: int = 100,
+    sort: str = None,
+    search: str = None,
+    db_session: Session = Depends(get_db),
+    #current_user_id: int = Depends(get_current_user),
+):
+    
+    return tournaments.view_all_tournaments(db_session, skip=skip, limit=limit, sort=sort, search=search) #current_user_id)
+
+
+@router.put("/{tournament_id}/players")
+def add_players(
+    tournament_id: UUID,
+    players: list[str],
+    db_session: Session = Depends(get_db),
+    # current_user: User = Depends(get_current_user),
+):
+    pass
+
+
+@router.put("/{tournament_id}/dates")
+def update_tournament_dates(
+    tournament_id: UUID,
+    start_time: str = None,
+    end_time: str = None,
+    db_session: Session = Depends(get_db),
+    # current_user: User = Depends(get_current_user),
+):
+    tournament = tournaments.get_tournament(db_session, tournament_id,) #current_user_id)
+    if tournament is None:
+        return NotFound(f"Tournament ID: {tournament_id}")
+
+
+@router.put("/{tournament_id}/matches/{match_id}")
+def update_match(
+    tournament_id: UUID,
+    players: list[str],
+    db_session: Session = Depends(get_db),
+    # current_user: User = Depends(get_current_user),
+):
+    pass
