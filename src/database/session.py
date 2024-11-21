@@ -7,7 +7,7 @@ from src.models.base import Base
 from src.models.tournament import Tournament, TournamentFormat, TournamentParticipants
 from src.models.match import MatchFormat, Match, ResultCodes
 from src.models.player import Player
-from src.models.user import User, Team
+from src.models.user import User
 
 import logging
 logger = logging.getLogger(__name__)

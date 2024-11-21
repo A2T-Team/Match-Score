@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     JWT_SECRET_KEY: str = os.getenv("SECRET_KEY")
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM")
-    JWT_EXPIRATION: int = int(os.getenv("JWT_EXPIRATION"))
+    JWT_EXPIRATION: int = os.getenv("JWT_EXPIRATION")
 
     DATABASE_URL: str = os.getenv("DATABASE_URL")
 
