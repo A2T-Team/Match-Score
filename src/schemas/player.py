@@ -8,7 +8,7 @@ class CreatePlayerRequest(BaseModel):
     first_name: str = Field(min_length=2, max_length=50, examples=["John"])
     last_name: str = Field(min_length=2, max_length=50, examples=["Doe"])
     country: str = Field(description="For which country the player competes")
-    team_id: int = Field(description="Player's team")
+    team_id: uuid.UUID = Field(description="Player's team")
     matches_played: int = Field(0, description="Matches played")
     wins: int = Field(0, description="Wins")
     losses: int = Field(0, description="Losses")
@@ -49,11 +49,6 @@ class PlayerUpdate(BaseModel):
     last_name: Optional[str] = None
     country: Optional[str] = None
     team_id: Optional[uuid.UUID] = None
-    matches_played: Optional[int] = None
-    wins: Optional[int] = None
-    wins: Optional[int] = None
-    losses: Optional[int] = None
-    draws: Optional[int] = None
     user_id: Optional[uuid.UUID] = None
 
 class PlayerResponse(CreatePlayerRequest):

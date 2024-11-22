@@ -1,6 +1,10 @@
 from sqlalchemy.orm import Session
+import uuid
 from fastapi import HTTPException, status
-from src.models.player import Player, Team, User
+from src.models.player import Player
+from src.models.user import User
+from src.models.match import Match
+
 from src.schemas.player import CreatePlayerRequest, PlayerUpdate
 
 
@@ -22,25 +26,31 @@ def create_player(db: Session, request: CreatePlayerRequest):
     #     )
 
     # Create the player
-    new_player = Player(
-        first_name=request.first_name,
-        last_name=request.last_name,
-        country=request.country,
-        team_id=request.team_id,
-        matches_played=request.matches_played,
-        wins=request.wins,
-        losses=request.losses,
-        draws=request.draws,
-        user_id=request.user_id,
-    )
+    # new_player = Player(
+    #     first_name=request.first_name,
+    #     last_name=request.last_name,
+    #     country=request.country,
+    #     team_id=request.team_id,
+    #     matches_played=request.matches_played,
+    #     wins=request.wins,
+    #     losses=request.losses,
+    #     draws=request.draws,
+    #     user_id=request.user_id,
+    # )
+    new_player = Player(**request.model_dump())
     db.add(new_player)
     db.commit()
     db.refresh(new_player)
     return new_player
 
 
-def read_player_by_id(db: Session, player_id: int):
-    return db.query(Player).filter_by(id=player_id).first()
+def read_player_by_id(db: Session, player_id: uuid):
+    player = db.query(Player).filter_by(id=player_id).first()
+    if not player:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Player not found"
+        )
+    return player
 
 
 def read_all_players(db: Session):
@@ -82,20 +92,47 @@ def read_all_players(db: Session):
 #     db.refresh(player)
 #     return player
 
-def update_match(db: Session, player_id: str, updates: PlayerUpdate) -> Player:
+def update_player(db: Session, player_id: uuid, updates: PlayerUpdate) -> Player:
     player = db.query(Player).filter(Player.id == player_id).first()
     if player:
         for key, value in updates.model_dump(exclude_unset=True).items():
             setattr(player, key, value)
         db.commit()
         db.refresh(player)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Player not found"
+        )
     return player
 
 
-def delete_player(db: Session, player_id: int):
+def delete_player(db: Session, player_id: uuid):
     player = db.query(Player).filter_by(id=player_id).first()
     if not player:
-        return False
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Player not found"
+        )
     db.delete(player)
     db.commit()
     return True
+
+def update_player_with_user(db: Session, player_id: uuid, user_id: uuid):
+    player = db.query(Player).filter_by(id=player_id).first()
+    if not player:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Player not found"
+        )
+
+    # Check if the user exists
+    user = db.query(User).filter_by(id=user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    # Connect user to player
+    player.user_id = user_id
+    db.commit()
+    db.refresh(player)
+    return player
+

@@ -26,12 +26,12 @@ class Player(Base):
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
     country = Column(String(50), nullable=False)
-    team_id = Column(Integer)
-    matches_played = Column(Integer)
-    wins = Column(Integer)
-    losses = Column(Integer)
-    draws = Column(Integer)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    team_id = Column(UUID, nullable=True)
+    matches_played = Column(Integer, default=0, nullable=True)
+    wins = Column(Integer, default=0, nullable=True)
+    losses = Column(Integer, default=0, nullable=True)
+    draws = Column(Integer), default=0, nullable=True
+    user_id = Column(UUID, ForeignKey("users.id"), nullable=False)
     #author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
 
