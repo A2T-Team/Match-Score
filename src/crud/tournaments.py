@@ -57,11 +57,11 @@ def create(
     #     raise AlreadyExists(
     #         status_code=status.HTTP_400_BAD_REQUEST, detail="The tournament name is not available."
     #     )
-    format_id = tournament_format_to_id(tournament.format)
+    format_id = tournament_format_to_id(tournament.format, db_session)
     if format_id is None:
         raise NotFound(key="format", key_value=tournament.format)
 
-    match_format_id = match_format_to_id(tournament.match_format)
+    match_format_id = match_format_to_id(tournament.match_format, db_session)
     if match_format_id is None:
         raise NotFound(key="match_format", key_value=tournament.match_format)
 
