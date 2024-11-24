@@ -102,10 +102,10 @@ def login_user(db: Session, user: LoginRequest):
     """
 
     if not username_exists(db=db, username=user.username):
-        return NotFound(content="Username does not exist")
+        return NotFound(key="Username", key_value=user.username)
 
     # if not email_exists(db=db, email=user.email):
-    #     return NotFound(content="Email does not exist")
+    #     return NotFound(key="Email", key_value=user.email")
 
     db_user = db.query(User).filter(User.username == user.username).first()
 
