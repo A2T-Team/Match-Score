@@ -4,7 +4,7 @@ from typing import Optional, List
 import uuid
 
 
-class CreateTournamentRequest(BaseModel):
+class TournamentSchema(BaseModel):
     name: str = Field(min_length=5, max_length=50, examples=["Black Doll Winter 2024"])
     format: str = Field(examples=["Format must be 'league' or 'knockout'"])
     match_format: str = Field(
@@ -15,15 +15,11 @@ class CreateTournamentRequest(BaseModel):
     prize: int = Field(
         ge=0, description="Prize for the tournament, must be 0 or positive"
     )
-    win_points: int = Field(
-        ge=0, description="How many points the winner gets"
-    )
+    win_points: int = Field(ge=0, description="How many points the winner gets")
     draw_points: int = Field(
         ge=0, description="How many points the players get on draw"
     )
-    author_id: uuid.UUID = Field(
-        description="Author ID"
-    )
+    author_id: uuid.UUID = Field(description="Author ID")
 
     @field_validator("format")
     def validate_format(cls, value):
@@ -68,15 +64,74 @@ class CreateTournamentRequest(BaseModel):
         return value
 
 
-class AddAllTournamentParticipants(BaseModel):
-    participants: List[str] = Field(description="List of all participants", example=["player1_full_name", "player2_full_name"])
+class Participant(BaseModel):
+    first_name: str = Field(
+        min_length=2,
+        max_length=25,
+        pattern="^[A-Za-z]+(?:[ '-][A-Za-z]+)*$",
+        examples=["Example"],
+    )
+    last_name: str = Field(
+        min_length=2,
+        max_length=25,
+        pattern="^[A-Za-z]+(?:[ '-][A-Za-z]+)*$",
+        examples=["Example"],
+    )
 
 
 class UpdateSingleMatchInTournament(BaseModel):
     tournament_id: uuid.UUID = Field(description="Tournament ID")
     match_id: uuid.UUID = Field(description="Match ID")
-    participants: List[str] = Field(description="List of all participants", example=["player1_full_name", "player2_full_name"])
+    participants: List[str] = Field(
+        description="List of all participants",
+        example=["player1_full_name", "player2_full_name"],
+    )
 
-class UpdateTournament(BaseModel):
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
+
+class UpdateTournamentDates(BaseModel):
+    start_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM"])
+    end_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM"])
+
+    @field_validator("start_time", mode="before")
+    def validate_start_time(cls, value):
+        if isinstance(value, str):
+            try:
+                value = datetime.strptime(value, r"%Y/%m/%d %H:%M")
+            except ValueError:
+                raise ValueError("Expected format is 'YYYY/MM/DD HH:MM'")
+        if value < datetime.now():
+            raise ValueError("Start date cannot be in the past.")
+        return value
+
+    @field_validator("end_time", mode="before")
+    def validate_end_time(cls, value, info: FieldValidationInfo):
+        # info.data is a dictionary that contains all the previously validated field values
+        # of the model up to that point.
+        if isinstance(value, str):
+            try:
+                value = datetime.strptime(value, r"%Y/%m/%d %H:%M")
+            except ValueError:
+                raise ValueError("Expected format is 'YYYY/MM/DD HH:MM'")
+
+        start_time = info.data.get("start_time")
+
+        if start_time and value < start_time:
+            raise ValueError("End date cannot be before the start date.")
+        if value < datetime.now():
+            raise ValueError("End date cannot be in the past.")
+
+        return value
+
+
+class UpdateDatesResponse(UpdateTournamentDates):
+    tournament_id: uuid.UUID
+    name: str
+    format: str
+
+
+class CreateTournamentResponse(TournamentSchema):
+    tournament_id: uuid.UUID
+    total_participants: int
+    participants: list
+    total_matches: int
+    matches: list

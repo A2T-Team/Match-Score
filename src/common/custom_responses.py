@@ -27,8 +27,8 @@ class OnlyAuthorAccess(JSONResponse):
         super().__init__(status_code=403, content={"detail": f"Only the author can {content}"})
 
 class NotFound(JSONResponse):
-    def __init__(self, content=''):
-        super().__init__(status_code=404, content={"detail": f"{content} not found"})
+    def __init__(self, key: str, key_value: str):
+        super().__init__(status_code=404, content={"detail": f"{key} '{key_value}' not found."})
 
 class AlreadyExists(JSONResponse):
     def __init__(self, content=''):
