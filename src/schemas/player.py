@@ -13,6 +13,7 @@ class CreatePlayerRequest(BaseModel):
     wins: int = Field(0, description="Wins")
     losses: int = Field(0, description="Losses")
     draws: int = Field(0, description="Draws")
+    poinnts: int = Field(0, description="Points")
     user_id: uuid.UUID = Field(description="User ID that relates to the player")
 
     @field_validator("first_name")
@@ -37,7 +38,7 @@ class CreatePlayerRequest(BaseModel):
             raise ValueError("Country must be between 2 and 50 characters")
         return value
 
-    @field_validator("matches_played", "wins", "losses", "draws")
+    @field_validator("matches_played", "wins", "losses", "draws", "points")
     def validate_non_negative(cls, value: int) -> int:
         if value < 0:
             raise ValueError("Value must be non-negative")

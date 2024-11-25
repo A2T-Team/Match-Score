@@ -30,7 +30,8 @@ class Player(Base):
     matches_played = Column(Integer, default=0, nullable=True)
     wins = Column(Integer, default=0, nullable=True)
     losses = Column(Integer, default=0, nullable=True)
-    draws = Column(Integer), default=0, nullable=True
+    draws = Column(Integer, default=0, nullable=True)
+    points = Column(Integer, default=0, nullable=True)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False)
     #author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 

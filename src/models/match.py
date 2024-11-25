@@ -24,6 +24,7 @@ class Match(Base):
         nullable=False,
     )
     format_id = Column(UUID, ForeignKey("match_format.id"), nullable = False)
+    end_condition = Column(Integer, nullable=False)
     player_a = Column(UUID, ForeignKey("players.id"), nullable=False)
     player_b = Column(UUID, ForeignKey("players.id"), nullable=False)
     score_a = Column(Integer, default=0, nullable=True)
@@ -40,7 +41,7 @@ class Match(Base):
     player_b = relationship("Player", foreign_keys=[player_b], back_populates="matches_as_b")
     match_format = relationship("MatchFormat", back_populates="match")
     author = relationship("User", back_populates="match")
-    result = relationship("ResultCode", back_populates="match")
+    #result = relationship("ResultCode", back_populates="match")
 
 class MatchFormat(Base):
     __tablename__ = "match_format"
@@ -56,15 +57,15 @@ class MatchFormat(Base):
 
     matches = relationship("Match", back_populates="match_format")
 
-class ResultCodes(Base):
-    __tablename__ = "result_codes"
-    id = Column(
-        Integer,
-        primary_key=True,
-        unique=True,
-        nullable=False,
-        autoincrement=True,
-    )
-    result = Column(String(10), unique=True, nullable=False)
+# class ResultCodes(Base):
+#     __tablename__ = "result_codes"
+#     id = Column(
+#         Integer,
+#         primary_key=True,
+#         unique=True,
+#         nullable=False,
+#         autoincrement=True,
+#     )
+#     result = Column(String(10), unique=True, nullable=False)
 
-    match = relationship("Match", back_populates="result")
+#     match = relationship("Match", back_populates="result")

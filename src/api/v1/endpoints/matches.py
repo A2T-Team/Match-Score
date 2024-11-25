@@ -30,8 +30,12 @@ def get_match(match_id: uuid.UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[MatchResponse])
-def get_all_matches(db: Session = Depends(get_db)):
-    all_matches = matches.read_all_matches(db)
+def get_all_matches(
+    tournament_id: uuid = None,
+    sort_by_date: bool = False,
+    db: Session = Depends(get_db),
+):
+    all_matches = matches.read_all_matches(db, tournament_id=tournament_id, sort_by_date=sort_by_date)
     return [MatchResponse.model_validate(match) for match in all_matches]
 
 
