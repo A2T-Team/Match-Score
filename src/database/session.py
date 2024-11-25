@@ -5,8 +5,9 @@ from src.core.config import settings
 from src.models.base import Base
 # import all models in order init_db to create the tables
 from src.models.tournament import Tournament, TournamentFormat, TournamentParticipants
-from src.models.match import MatchFormat
-from src.models.user import User, Team, Player
+from src.models.match import MatchFormat, Match, ResultCodes
+from src.models.player import Player
+from src.models.user import User
 
 import logging
 logger = logging.getLogger(__name__)

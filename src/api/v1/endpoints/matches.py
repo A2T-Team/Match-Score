@@ -10,11 +10,19 @@ import logging
 import uuid
 from sqlalchemy.orm import Session
 
+from src.models.match import Match, MatchFormat, ResultCodes
+from src.models.tournament import Tournament
+from src.models.player import Player
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from src.schemas.match import CreateMatchRequest, MatchResponse, MatchUpdate
+from src.crud import matches
+import uuid 
 
 logger = logging.getLogger(__name__)
 
-
 router = APIRouter()
+# matches_router = APIRouter(prefix="/matches", tags=["Matches"])
 
 
 @router.post("/", response_model=MatchResponse, status_code=status.HTTP_201_CREATED)
@@ -38,8 +46,7 @@ def get_all_matches(
     all_matches = matches.read_all_matches(db, tournament_id=tournament_id, sort_by_date=sort_by_date)
     return [MatchResponse.model_validate(match) for match in all_matches]
 
-
-@router.put("/{match_id}", response_model=MatchResponse)
+@router.patch("/{match_id}", response_model=MatchResponse)
 def update_match(match_id: uuid.UUID, updates: MatchUpdate, db: Session = Depends(get_db)):
     match = matches.update_match(db, match_id, updates)
     return MatchResponse.model_validate(match)

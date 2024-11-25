@@ -40,6 +40,8 @@ class Tournament(Base):
     participants = relationship(
         "Player", secondary="tournament_participants", back_populates="tournament"
     )  # To add in class Player -> tournament = relationship("Tournament", secondary="TournamentParticipants", back_populates="participants")
+    format = relationship("TournamentFormat", back_populates="tournaments")
+    match_format = relationship("MatchFormat", back_populates="tournaments")
 
     def __repr__(self):
         return f"Tournament '{self.name}', start date '{self.start_time}', end date '{self.end_time}')"
@@ -62,4 +64,6 @@ class TournamentFormat(Base):
         nullable=False,
         autoincrement=True,
     )
-    name = Column(String(10), unique=True, nullable=False)
+    type = Column(String(10), unique=True, nullable=False)
+
+    tournaments = relationship("Tournament", back_populates="format")
