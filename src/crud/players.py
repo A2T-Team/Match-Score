@@ -5,7 +5,7 @@ from src.models.player import Player
 from src.models.user import User
 from src.models.match import Match
 
-from src.schemas.player import CreatePlayerRequest, PlayerUpdate
+from src.schemas.player import CreatePlayerRequest #PlayerUpdate
 
 
 def create_player(db: Session, request: CreatePlayerRequest):
@@ -44,7 +44,7 @@ def create_player(db: Session, request: CreatePlayerRequest):
     return new_player
 
 
-def read_player_by_id(db: Session, player_id: uuid):
+def read_player_by_id(db: Session, player_id: uuid.UUID):
     player = db.query(Player).filter_by(id=player_id).first()
     if not player:
         raise HTTPException(
@@ -92,21 +92,21 @@ def read_all_players(db: Session):
 #     db.refresh(player)
 #     return player
 
-def update_player(db: Session, player_id: uuid, updates: PlayerUpdate) -> Player:
-    player = db.query(Player).filter(Player.id == player_id).first()
-    if player:
-        for key, value in updates.model_dump(exclude_unset=True).items():
-            setattr(player, key, value)
-        db.commit()
-        db.refresh(player)
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Player not found"
-        )
-    return player
+# def update_player(db: Session, player_id: uuid, updates: PlayerUpdate) -> Player:
+#     player = db.query(Player).filter(Player.id == player_id).first()
+#     if player:
+#         for key, value in updates.model_dump(exclude_unset=True).items():
+#             setattr(player, key, value)
+#         db.commit()
+#         db.refresh(player)
+#     else:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND, detail="Player not found"
+#         )
+#     return player
 
 
-def delete_player(db: Session, player_id: uuid):
+def delete_player(db: Session, player_id: uuid.UUID):
     player = db.query(Player).filter_by(id=player_id).first()
     if not player:
         raise HTTPException(
@@ -116,7 +116,7 @@ def delete_player(db: Session, player_id: uuid):
     db.commit()
     return True
 
-def update_player_with_user(db: Session, player_id: uuid, user_id: uuid):
+def update_player_with_user(db: Session, player_id: uuid.UUID, user_id: uuid.UUID):
     player = db.query(Player).filter_by(id=player_id).first()
     if not player:
         raise HTTPException(

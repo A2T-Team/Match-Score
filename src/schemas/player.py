@@ -45,16 +45,18 @@ class CreatePlayerRequest(BaseModel):
         return value
 
 
-class PlayerUpdate(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    country: Optional[str] = None
-    team_id: Optional[uuid.UUID] = None
-    user_id: Optional[uuid.UUID] = None
+# class PlayerUpdate(BaseModel):
+#     first_name: Optional[str] = None
+#     last_name: Optional[str] = None
+#     country: Optional[str] = None
+#     team_id: Optional[uuid.UUID] = None
+#     user_id: Optional[uuid.UUID] = None
+
+
 
 class PlayerResponse(CreatePlayerRequest):
-    id: uuid.UUID = Field(..., description="Unique ID of the player")
+    id: uuid.UUID
 
-    model_config = {
-        "from_attributes": True,  # Enables ORM mode
-    }
+    # model_config = {
+    #     "from_attributes": True,  # Enables ORM mode
+    # }
