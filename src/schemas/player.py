@@ -13,7 +13,7 @@ class CreatePlayerRequest(BaseModel):
     wins: int = Field(0, description="Wins")
     losses: int = Field(0, description="Losses")
     draws: int = Field(0, description="Draws")
-    poinnts: int = Field(0, description="Points")
+    points: int = Field(0, description="Points")
     user_id: uuid.UUID = Field(description="User ID that relates to the player")
 
     @field_validator("first_name")
