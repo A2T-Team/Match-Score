@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from src.api.deps import get_db
-from src.schemas.player import CreatePlayerRequest, PlayerResponse, PlayerUpdate
+from src.schemas.player import CreatePlayerRequest, PlayerResponse #PlayerUpdate
 from src.crud import players
 import uuid
 
@@ -15,7 +15,7 @@ def create_player(request: CreatePlayerRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/{player_id}", response_model=PlayerResponse)
-def get_player(player_id: uuid, db: Session = Depends(get_db)):
+def get_player(player_id: uuid.UUID, db: Session = Depends(get_db)):
     player = players.get_player_by_id(db, player_id)
     return PlayerResponse.model_validate(player)
 
@@ -26,18 +26,18 @@ def get_all_players(db: Session = Depends(get_db)):
     return [PlayerResponse.model_validate(player) for player in players]
 
 
-@router.put("/{player_id}", response_model=PlayerResponse)
-def update_player(player_id: uuid, updates: PlayerUpdate, db: Session = Depends(get_db)):
-    player = players.update_player(db, player_id, updates)
-    return PlayerResponse.model_validate(player)
+# @router.put("/{player_id}", response_model=PlayerResponse)
+# def update_player(player_id: uuid, updates: PlayerUpdate, db: Session = Depends(get_db)):
+#     player = players.update_player(db, player_id, updates)
+#     return PlayerResponse.model_validate(player)
 
 
 @router.delete("/{player_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_player(player_id: uuid, db: Session = Depends(get_db)):
+def delete_player(player_id: uuid.UUID, db: Session = Depends(get_db)):
     return players.delete_player(db, player_id)
 
 @router.put("/connect/{player_id}", response_model=PlayerResponse)
-def connect_user_to_player(player_id: uuid, user_id: uuid, db: Session = Depends(get_db)):
+def connect_user_to_player(player_id: uuid.UUID, user_id: uuid.UUID, db: Session = Depends(get_db)):
     player = players.update_player_with_user(db, player_id, user_id)
     return PlayerResponse.model_validate(player)
 

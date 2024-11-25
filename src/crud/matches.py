@@ -1,14 +1,24 @@
 from sqlalchemy.orm import Session
-from src.models.match import Match
+from src.models.match import Match, MatchFormat
 from src.models.player import Player
 from src.models.tournament import Tournament, TournamentParticipants
-
+from src.common.custom_exceptions import NotFound 
 import uuid
 from fastapi import HTTPException, status
-from src.schemas.match import CreateMatchRequest, MatchUpdate
+from src.schemas.match import CreateMatchRequest #MatchUpdate
+
+def match_format_to_id(value: str, db_session: Session):
+    format = db_session.query(MatchFormat).filter(MatchFormat.type == value).first()
+    if format is None:
+        return None
+
+    return format.id
 
 
 def create_match(db: Session, match_data: CreateMatchRequest) -> Match:
+    match_format_id = match_format_to_id(match_data.format, db)
+    if match_format_id is None:
+        raise NotFound(key="match_format", key_value=match_data.format)
     new_match = Match(**match_data.model_dump())
     db.add(new_match)
     db.commit()
@@ -16,14 +26,14 @@ def create_match(db: Session, match_data: CreateMatchRequest) -> Match:
     return new_match
 
 
-def read_match_by_id(db: Session, match_id: uuid) -> Match:
+def read_match_by_id(db: Session, match_id: uuid.UUID) -> Match:
     match = db.query(Match).filter(Match.id == match_id).first()
     if not match:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
     return match
 
 
-def read_all_matches(db: Session, tournament_id: uuid = None, sort_by_date: bool = False):
+def read_all_matches(db: Session, tournament_id: uuid.UUID = None, sort_by_date: bool = False):
     query = db.query(Match)
 
     if tournament_id is not None:
@@ -40,19 +50,19 @@ def read_all_matches(db: Session, tournament_id: uuid = None, sort_by_date: bool
     return matches
 
 
-def update_match(db: Session, match_id: uuid, updates: MatchUpdate) -> Match:
-    match = db.query(Match).filter(Match.id == match_id).first()
-    if match:
-        for key, value in updates.model_dump(exclude_unset=True).items():
-            setattr(match, key, value)
-        db.commit()
-        db.refresh(match)
-    else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
-    return match
+# def update_match(db: Session, match_id: uuid, updates: MatchUpdate) -> Match:
+#     match = db.query(Match).filter(Match.id == match_id).first()
+#     if match:
+#         for key, value in updates.model_dump(exclude_unset=True).items():
+#             setattr(match, key, value)
+#         db.commit()
+#         db.refresh(match)
+#     else:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
+#     return match
 
 
-def delete_match(db: Session, match_id: uuid) -> bool:
+def delete_match(db: Session, match_id: uuid.UUID) -> bool:
     match = db.query(Match).filter(Match.id == match_id).first()
     if not match:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
@@ -60,7 +70,7 @@ def delete_match(db: Session, match_id: uuid) -> bool:
     db.commit()
     return True
 
-def update_player_stats_after_match(db: Session, match_id: uuid):
+def update_player_stats_after_match(db: Session, match_id: uuid.UUID):
     match = db.query(Match).filter_by(id=match_id).first()
 
     if not match:

@@ -1,7 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator, FieldValidationInfo
 from typing import Optional, List
-import uuid
+from uuid import UUID
 
 
 class TournamentSchema(BaseModel):
@@ -19,7 +19,7 @@ class TournamentSchema(BaseModel):
     draw_points: int = Field(
         ge=0, description="How many points the players get on draw"
     )
-    author_id: uuid.UUID = Field(description="Author ID")
+    author_id: UUID = Field(description="Author ID")
 
     @field_validator("format")
     def validate_format(cls, value):
@@ -80,8 +80,8 @@ class Participant(BaseModel):
 
 
 class UpdateSingleMatchInTournament(BaseModel):
-    tournament_id: uuid.UUID = Field(description="Tournament ID")
-    match_id: uuid.UUID = Field(description="Match ID")
+    tournament_id: UUID = Field(description="Tournament ID")
+    match_id: UUID = Field(description="Match ID")
     participants: List[str] = Field(
         description="List of all participants",
         example=["player1_full_name", "player2_full_name"],
@@ -124,13 +124,13 @@ class UpdateTournamentDates(BaseModel):
 
 
 class UpdateDatesResponse(UpdateTournamentDates):
-    tournament_id: uuid.UUID
+    tournament_id: UUID
     name: str
     format: str
 
 
 class CreateTournamentResponse(TournamentSchema):
-    tournament_id: uuid.UUID
+    tournament_id: UUID
     total_participants: int
     participants: list
     total_matches: int

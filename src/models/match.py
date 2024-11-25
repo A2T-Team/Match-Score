@@ -58,17 +58,17 @@ class MatchFormat(Base):
     tournaments = relationship("Tournament", back_populates="match_format")
 
 
-    # matches = relationship("Match", back_populates="match_format")
+    #matches = relationship("Match", back_populates="match_format")
 
-# class ResultCodes(Base):
-#     __tablename__ = "result_codes"
-#     id = Column(
-#         Integer,
-#         primary_key=True,
-#         unique=True,
-#         nullable=False,
-#         autoincrement=True,
-#     )
-#     result = Column(String(10), unique=True, nullable=False)
+class ResultCodes(Base):
+    __tablename__ = "result_codes"
+    id = Column(
+        Integer,
+        primary_key=True,
+        unique=True,
+        nullable=False,
+        autoincrement=True,
+    )
+    result = Column(String(10), unique=True, nullable=False)
 
-#     match = relationship("Match", back_populates="result")
+    match = relationship("Match", back_populates="result")
