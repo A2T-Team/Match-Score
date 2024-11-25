@@ -5,6 +5,7 @@ import uuid
 
 class CreateMatchRequest(BaseModel):
     format: str = Field(examples=["Format must be 'time' or 'score'"])
+    end_condition: int = Field(description=["Minutes for 'time' format or points for 'score' format"])
     player_a: uuid.UUID = Field(description="First player ID")
     player_b: uuid.UUID = Field(description="Second player ID")
     score_a: int = Field(ge=0, examples=["Score must be 0 or positive"])
@@ -20,6 +21,12 @@ class CreateMatchRequest(BaseModel):
     def validate_format(cls, value):
         if value not in ["time", "score"]:
             raise ValueError("Match format must be 'time' or 'score'")
+        return value
+    
+    @field_validator("end_condition")
+    def validate_non_negative(cls, value):
+        if value < 0:
+            raise ValueError("Value must be non-negative")
         return value
 
     @field_validator("result_code")
@@ -69,6 +76,7 @@ class MatchUpdate(BaseModel):
     result_code: Optional[str] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
+    prize: Optional[int] = None
 
 class MatchResponse(CreateMatchRequest):
     id: uuid.UUID = Field(..., description="Unique ID of the match")

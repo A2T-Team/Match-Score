@@ -23,6 +23,7 @@ class Match(Base):
         unique=True,
         nullable=False,
     )
+
     format_id = Column(Integer, ForeignKey("match_format.id"), nullable = False)
     player_a_id = Column(UUID, ForeignKey("players.id"))
     player_b_id = Column(UUID, ForeignKey("players.id"))
@@ -59,15 +60,15 @@ class MatchFormat(Base):
 
     # matches = relationship("Match", back_populates="match_format")
 
-class ResultCodes(Base):
-    __tablename__ = "result_codes"
-    id = Column(
-        Integer,
-        primary_key=True,
-        unique=True,
-        nullable=False,
-        autoincrement=True,
-    )
-    result = Column(String(10), unique=True, nullable=False)
+# class ResultCodes(Base):
+#     __tablename__ = "result_codes"
+#     id = Column(
+#         Integer,
+#         primary_key=True,
+#         unique=True,
+#         nullable=False,
+#         autoincrement=True,
+#     )
+#     result = Column(String(10), unique=True, nullable=False)
 
-    match = relationship("Match", back_populates="result")
+#     match = relationship("Match", back_populates="result")
