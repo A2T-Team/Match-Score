@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, FieldValidationInfo
+from src.models.user import Role
 from typing import Optional
 import re
 import uuid
@@ -38,14 +39,13 @@ class CreateUserRequest(BaseModel):
         return value
 
 
-class UpdateUserRequest(BaseModel):
+class UpdateEmailRequest(BaseModel):
 
     """
     Schema for updating user data.
     """
 
     email: Optional[str] = Field(min_length=6, max_length=50, examples=["johndoe@gmail.com"])
-    role: Optional[str] = Field(examples=["user", "player", "director", "admin"])
 
     @field_validator("email")
     def validate_email(cls, value):
@@ -56,17 +56,6 @@ class UpdateUserRequest(BaseModel):
 
         if not re.match(r"[^@]+@[^@]+\.[^@]+", value):
             raise ValueError("Invalid email address")
-        return value
-
-    @field_validator("role")
-    def validate_role(cls, value):
-
-        """
-        Validate role to be one of the predefined roles.
-        """
-
-        if value not in ["user", "player", "director", "admin"]:
-            raise ValueError("Invalid role")
         return value
 
 
@@ -100,4 +89,47 @@ class LoginRequest(BaseModel):
         if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$", value):
             raise ValueError("Password must be at least 8 characters long"
                              " and contain at least one letter and one number")
+        return value
+
+
+class UserResponse(BaseModel):
+
+    """
+    Schema for returning user data.
+    """
+
+    username: str
+    email: str
+    role: str
+
+
+class UpdateUserRequest(BaseModel):
+
+    """
+    Schema for updating user data.
+    """
+
+    email: Optional[str] = Field(min_length=6, max_length=50, examples=["johndoe@gmail.com"])
+    role: Optional[str] = Field(examples=["user", "player", "director", "admin"])
+
+    @field_validator("email")
+    def validate_email(cls, value):
+
+        """
+        Validate email to contain '@' and '.'.
+        """
+
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", value):
+            raise ValueError("Invalid email address")
+        return value
+
+    @field_validator("role")
+    def validate_role(cls, value):
+
+        """
+        Validate role to be one of the predefined roles.
+        """
+
+        if value not in ["user", "player", "director", "admin"]:
+            raise ValueError("Invalid role")
         return value

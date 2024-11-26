@@ -62,16 +62,12 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
     try:
         payload = jwt.decode(token, _SECRET_KEY, algorithms=[_ALGORITHM])
-        user_identifier: str = payload.get("id")
-        if user_identifier is None:
+        username: str = payload.get("sub")
+
+        if username is None:
             raise credential_exception
 
     except JWTError:
         raise credential_exception
 
-    user = User.query.filter_by(id=user_identifier).all()
-
-    if user is None:
-        raise credential_exception
-
-    return user
+    return username

@@ -6,7 +6,7 @@ from src.core.authentication import get_current_user
 from src.api.deps import get_db
 from src.schemas.user import CreateUserRequest, UpdateUserRequest, LoginRequest
 from src.models.user import User
-from src.crud.users import get_all_users, create_user, get_user_by_id, login_user
+from src.crud.users import get_all_users, create_user, get_user_by_id, login_user, get_me, update_email, update_user
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,31 +20,47 @@ router = APIRouter()
 #     return get_all_users(db, user.id)
 
 @router.get("/")
-def read_users(db: Session = Depends(get_db)):
-    return get_all_users(db)
+def get_users(token: Annotated[str, Header()], db: Session = Depends(get_db)):
+    return get_all_users(db, token)
 
 
 @router.post("/register")
-def create_user(user: CreateUserRequest, db: Session = Depends(get_db)):
-    return create_user(db, user)
+def register(user: CreateUserRequest, db: Session = Depends(get_db)):
+    create_user(db, user)
+    return "Registration successful"
 
 
-@router.get("/login")
-def login_user(user: LoginRequest, db: Session = Depends(get_db)):
-    return login_user(db, user)
+@router.post("/login")
+def login(user: LoginRequest, db: Session = Depends(get_db)):
+    token = login_user(db, user)
+    return token
 
 
 @router.get("/me")
 def read_user_me(token: Annotated[str, Header()], db: Session = Depends(get_db)):
-    user = get_current_user(token)
+    user = get_me(db, token)
     return user
 
 
-@router.get("/{user_id}")
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    return db.query(User).filter(User.id == user_id).first()
+@router.get("/{username}")
+def get_user_by_username(username: str, token: Annotated[str, Header()], db: Session = Depends(get_db)):
+    user = get_user_by_username(username, token, db)
+    return user
+
+
+@router.get("/{email}")
+def get_user_by_email(email: str, token: Annotated[str, Header()], db: Session = Depends(get_db)):
+    user = get_user_by_email(email, token, db)
+    return user
 
 
 @router.put("/{user_id}")
-def update_user(user_id: int, user: UpdateUserRequest, db: Session = Depends(get_db)):
-    return user
+def update_email(token: Annotated[str, Header()], new: UpdateUserRequest, db: Session = Depends(get_db)):
+    new_credentials = update_email(token, new, db)
+    return new_credentials
+
+
+@router.put("/{username}")
+def update_user_credentials(token: Annotated[str, Header()], username: str, new: UpdateUserRequest, db: Session = Depends(get_db)):
+    new_credentials = update_user(db, new, username, token)
+    return new_credentials
