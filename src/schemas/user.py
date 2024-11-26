@@ -33,9 +33,9 @@ class CreateUserRequest(BaseModel):
         Validate password to contain at least one letter and one number.
         """
 
-        if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$", value):
+        if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&\-_])[A-Za-z\d@$!%*?&\-_]{8,}$", value):
             raise ValueError("Password must be at least 8 characters long"
-                             " and contain at least one letter and one number")
+                             " and contain at least one letter and one number and one special character")
         return value
 
 
@@ -86,9 +86,9 @@ class LoginRequest(BaseModel):
         Validate password to contain at least one letter and one number.
         """
 
-        if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$", value):
+        if not re.match(r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&\-_])[A-Za-z\d@$!%*?&\-_]{8,}$", value):
             raise ValueError("Password must be at least 8 characters long"
-                             " and contain at least one letter and one number")
+                             " and contain at least one letter and one number and one special character")
         return value
 
 
@@ -100,7 +100,7 @@ class UserResponse(BaseModel):
 
     username: str
     email: str
-    role: str
+    role: Role
 
 
 class UpdateUserRequest(BaseModel):

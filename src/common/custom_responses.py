@@ -15,7 +15,7 @@ class Unauthorized(JSONResponse):
         super().__init__(status_code=401, content={"detail": content})
 
 class ForbiddenAccess(JSONResponse):
-    def __init__(self, content="User does not have access to this category"):
+    def __init__(self, content="You don't have permission to access this resource"):
         super().__init__(status_code=403, content={"detail": content})
 
 class OnlyAdminAccess(JSONResponse):

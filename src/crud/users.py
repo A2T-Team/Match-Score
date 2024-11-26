@@ -3,7 +3,7 @@ from src.core.authentication import get_current_user, verify_password, create_ac
 from src.models.user import User
 from src.schemas.user import CreateUserRequest, LoginRequest, UserResponse, UpdateEmailRequest, UpdateUserRequest
 from sqlalchemy.orm import Session
-from src.common.custom_responses import AlreadyExists, NotFound, Unauthorized
+from src.common.custom_responses import AlreadyExists, NotFound, Unauthorized, BadRequest, ForbiddenAccess
 from src.models.user import Role
 from src.core.authentication import get_password_hash, create_access_token, get_current_user
 import logging
@@ -22,11 +22,13 @@ def is_admin(db: Session, user_id: uuid.UUID) -> bool:
     Returns:
         bool: True if the user has the admin role, False otherwise.
     """
+    user = db.query(User).filter(User.id == user_id).first()
 
-    return db.query(User).filter(User.id == user_id).first().role == Role.ADMIN
+    return user.role == Role.ADMIN
 
 
 def get_id_by_username(db: Session, username: str) -> uuid.UUID:
+
     """
     Retrieve the UUID of a user by its username.
 
@@ -152,7 +154,7 @@ def get_user_by_id(db: Session, user_id: uuid.UUID, token: str):
     user_id = get_id_by_username(db, get_current_user(token))
 
     if not is_admin(db, user_id):
-        return Unauthorized(content="You do not have permission to view all users")
+        return ForbiddenAccess()
 
     user = db.query(User).filter(User.id == user_id).first()
 
@@ -184,7 +186,7 @@ def get_me(db: Session, token: str):
     return UserResponse(username=user.username, email=user.email, role=user.role)
 
 
-def get_user_by_username(db: Session, username: str, token: str):
+def get_by_username(db: Session, username: str, token: str):
     """
     Retrieve a user from the database by its username.
 
@@ -199,13 +201,16 @@ def get_user_by_username(db: Session, username: str, token: str):
 
     user = db.query(User).filter(User.username == username).first()
 
+    if not is_admin(db, get_id_by_username(db, get_current_user(token))):
+        return ForbiddenAccess()
+
     if not user:
         return NotFound(key="Username", key_value=username)
 
     return UserResponse(username=user.username, email=user.email, role=user.role)
 
 
-def get_user_by_email(db: Session, email: str, token: str):
+def get_by_email(db: Session, email: str, token: str):
     """
     Retrieve a user from the database by its email.
 
@@ -221,7 +226,7 @@ def get_user_by_email(db: Session, email: str, token: str):
     user_id = get_id_by_username(db, get_current_user(token))
 
     if not is_admin(db, user_id):
-        return Unauthorized(content="You do not have permission to view all users")
+        return ForbiddenAccess()
 
     user = db.query(User).filter(User.email == email).first()
 
@@ -246,7 +251,7 @@ def get_all_users(db: Session, token: str):  # , user_id: uuid.UUID
     user_id = get_id_by_username(db, get_current_user(token))
 
     if not is_admin(db, user_id):
-        return Unauthorized(content="You do not have permission to view all users")
+        return ForbiddenAccess()
 
     if not db.query(User).all():
         return NotFound(key="Users", key_value="")
@@ -256,58 +261,82 @@ def get_all_users(db: Session, token: str):  # , user_id: uuid.UUID
     return [UserResponse(username=user.username, email=user.email, role=user.role) for user in users]
 
 
-def update_email(db: Session, new_email: UpdateEmailRequest, token: str):
+def update_email(db: Session, new_email: UpdateEmailRequest, token: str) -> UserResponse | AlreadyExists | NotFound:
+
     """
-    Update a user in the database, using the provided UpdateUserRequest object.
+    Update the email of a user in the database, using the provided UpdateEmailRequest object.
 
     Parameters:
         db (Session): An instance of the SQLAlchemy Session class.
-        new_email (UpdateUserRequest): An instance of the `UpdateUserRequest` class.
+        new_email (UpdateEmailRequest): Contains the new email to be set.
         token (str): The token of the user making the request.
 
-
     Returns:
-        User: An instance of the `User` class with all attributes of the updated user.
+        UserResponse: Contains the updated user details.
     """
 
     username = get_current_user(token)
-    db_user = db.query(User).filter(User.username == username).first()
 
+    # Fetch the user from the database
+    db_user = db.query(User).filter(User.username == username).first()
+    if not db_user:
+        return NotFound(key="Username", key_value=username)
+
+    # Validate the new email
     if new_email.email:
+        if email_exists(db, new_email.email):  # Ensure email is unique
+            return AlreadyExists(content="Email")
         db_user.email = new_email.email
 
+    # Commit changes and return the updated user
     db.commit()
     db.refresh(db_user)
 
     return UserResponse(username=db_user.username, email=db_user.email, role=db_user.role)
 
 
-def update_user(db: Session, new: UpdateUserRequest, username: str, token: str):
-
+def update_user(db: Session, new: UpdateUserRequest, user_to_update: str, token: str) -> (UserResponse |
+                                                                                          AlreadyExists |
+                                                                                          NotFound |
+                                                                                          ForbiddenAccess |
+                                                                                          BadRequest):
     """
-    Update a user in the database, using the provided UpdateUserRequest object.
+    Update a user's details in the database.
 
     Parameters:
         db (Session): An instance of the SQLAlchemy Session class.
-        new (UpdateUserRequest): An instance of the `UpdateUserRequest` class.
-        username (str): The username of the user to update.
+        new (UpdateUserRequest): Contains new details for the user.
+        user_to_update (str): The username of the user to update.
         token (str): The token of the user making the request.
 
     Returns:
-        User: An instance of the `User` class with all attributes of the updated user.
+        UserResponse: The updated user details.
     """
 
-    if not is_admin(db, get_id_by_username(db, get_current_user(token))):
-        return Unauthorized(content="You do not have permission to update users")
-    db_user = db.query(User).filter(User.username == username).first()
+    admin_id = get_id_by_username(db, get_current_user(token))
+    if not is_admin(db, admin_id):
+        return ForbiddenAccess()
+
+    db_user = db.query(User).filter(User.username == user_to_update).first()
+    if not db_user:
+        return NotFound(key="Username", key_value=user_to_update)
 
     if new.email:
+        if email_exists(db, new.email):
+            return AlreadyExists(content="Email")
         db_user.email = new.email
 
-    if new.role:
-        db_user.role = new.role
+    if new.role == "admin":
+        db_user.role = Role.ADMIN
+    elif new.role == "director":
+        db_user.role = Role.DIRECTOR
+    elif new.role == "player":
+        db_user.role = Role.PLAYER
+    elif new.role == "user":
+        db_user.role = Role.USER
 
     db.commit()
     db.refresh(db_user)
 
     return UserResponse(username=db_user.username, email=db_user.email, role=db_user.role)
+
