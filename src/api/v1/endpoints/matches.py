@@ -1,21 +1,8 @@
-# from fastapi import APIRouter, Depends, Query, Path, HTTPException, status
-# from src.schemas.match import CreateMatchRequest, MatchResponse, #MatchUpdate
-# from psycopg2.errors import UniqueViolation
-# from sqlalchemy.exc import IntegrityError
-# from src.common.custom_responses import AlreadyExists, InternalServerError
-# from sqlalchemy.orm import Session
 from src.api.deps import get_db
-# from src.crud import matches
 import logging
-# import uuid
-# from sqlalchemy.orm import Session
-
-from src.models.match import Match, MatchFormat, ResultCodes
-from src.models.tournament import Tournament
-from src.models.player import Player
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from src.schemas.match import CreateMatchRequest, MatchResponse #MatchUpdate
+from src.schemas.match import CreateMatchRequest, MatchResponse, MatchResult, MatchUpdateTime #MatchUpdate
 from src.crud import matches
 import uuid 
 
@@ -26,7 +13,7 @@ router = APIRouter()
 
 
 @router.post("/", response_model=MatchResponse, status_code=status.HTTP_201_CREATED)
-def create_match(request: CreateMatchRequest, db: Session = Depends(get_db)):
+def post_match(request: CreateMatchRequest, db: Session = Depends(get_db)):
     new_match = matches.create_match(db, request)
     return MatchResponse.model_validate(new_match)
 
@@ -51,6 +38,16 @@ def get_all_matches(
 #     match = matches.update_match(db, match_id, updates)
 #     return MatchResponse.model_validate(match)
 
+@router.put("/{match_id}", response_model=MatchResponse)
+def put_match_score(match_id: uuid.UUID, updates: MatchResult, db: Session = Depends(get_db)):
+    match = matches.update_match_score(db, match_id, updates)
+    return MatchResponse.model_validate(match)
+
+@router.put("/{match_id}", response_model=MatchResponse)
+def put_match_score(match_id: uuid.UUID, updates: MatchUpdateTime, db: Session = Depends(get_db)):
+    match = matches.update_match_date(db, match_id, updates)
+    return MatchResponse.model_validate(match)
+
 
 @router.delete("/{match_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_match(match_id: uuid.UUID, db: Session = Depends(get_db)):
@@ -58,6 +55,6 @@ def delete_match(match_id: uuid.UUID, db: Session = Depends(get_db)):
     return success
 
 @router.post("/match/{match_id}/update_stats", status_code=status.HTTP_200_OK)
-def update_player_stats(match_id: uuid.UUID, db: Session = Depends(get_db)):
+def put_player_stats(match_id: uuid.UUID, db: Session = Depends(get_db)):
     result = matches.update_player_stats_after_match(db, match_id)
     return result

@@ -3,6 +3,7 @@ import uuid
 from fastapi import HTTPException, status
 from src.models.player import Player
 from src.models.user import User
+from src.models.tournament import TournamentParticipants
 from src.models.match import Match
 
 from src.schemas.player import CreatePlayerRequest #PlayerUpdate
@@ -53,8 +54,17 @@ def read_player_by_id(db: Session, player_id: uuid.UUID):
     return player
 
 
-def read_all_players(db: Session):
-    return db.query(Player).all()
+def read_all_players(db: Session, tournament_id: uuid.UUID | None = None):
+    query = db.query(Player)
+    
+    if tournament_id:
+        query = (
+            query.join(TournamentParticipants, Player.id == TournamentParticipants.player_id)
+            .filter(TournamentParticipants.tournament_id == tournament_id)
+        )
+    query = query.order_by(Player.first_name)
+    
+    return query.all()
 
 
 # def update_player(db: Session, player_id: int, updates: PlayerUpdate):

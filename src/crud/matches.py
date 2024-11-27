@@ -2,10 +2,12 @@ from sqlalchemy.orm import Session
 from src.models.match import Match, MatchFormat
 from src.models.player import Player
 from src.models.tournament import Tournament, TournamentParticipants
-from src.common.custom_exceptions import NotFound 
+from src.common.custom_exceptions import NotFound, ScoreLimit
+from src.crud.tournaments import get_tournament
+from datetime import timedelta
 import uuid
 from fastapi import HTTPException, status
-from src.schemas.match import CreateMatchRequest #MatchUpdate
+from src.schemas.match import CreateMatchRequest, MatchUpdateTime, MatchResult #MatchUpdate
 
 def match_format_to_id(value: str, db_session: Session):
     format = db_session.query(MatchFormat).filter(MatchFormat.type == value).first()
@@ -16,14 +18,58 @@ def match_format_to_id(value: str, db_session: Session):
 
 
 def create_match(db: Session, match_data: CreateMatchRequest) -> Match:
-    match_format_id = match_format_to_id(match_data.format, db)
-    if match_format_id is None:
-        raise NotFound(key="match_format", key_value=match_data.format)
-    new_match = Match(**match_data.model_dump())
+    if match_data.tournament_id:
+        tournament = get_tournament(db, match_data.tournament_id)
+        if not tournament:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tournament not found")
+        new_match = Match(
+            format_id = tournament.match_format_id,
+            end_condition = match_data.end_condition,
+            player_a_id = match_data.player_a,
+            player_b_id = match_data.player_b,
+            start_time = match_data.start_time,
+            end_time = match_data.end_time,
+            prize = 0,
+            author_id = match_data.author_id,
+            tournament_id = match_data.tournament_id,
+            stage = match_data.stage,
+            serial_number = match_data.serial_number
+        )
+    else:
+        match_format_id = match_format_to_id(match_data.format, db)
+        new_match = Match(
+            format_id = match_format_id,
+            end_condition = match_data.end_condition,
+            player_a_id = match_data.player_a,
+            player_b_id = match_data.player_b,
+            start_time = match_data.start_time,
+            end_time = match_data.end_time,
+            prize = match_data.prize,
+            author_id = match_data.author_id,
+        )
+
+    #new_match = Match(**match_data.model_dump())
     db.add(new_match)
     db.commit()
     db.refresh(new_match)
     return new_match
+
+
+    format_id = Column(Integer, ForeignKey("match_format.id"), nullable = False)
+    end_condition = Column(Integer, nullable=False)
+    player_a_id = Column(UUID, ForeignKey("players.id"))
+    player_b_id = Column(UUID, ForeignKey("players.id"))
+    score_a = Column(Integer)
+    score_b = Column(Integer)
+    result_code = Column(Integer, ForeignKey("result_codes.id"))
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
+    prize = Column(Integer)
+    author_id = Column(UUID, ForeignKey("users.id"), nullable=False)
+    tournament_id = Column(UUID, ForeignKey("tournaments.id"))
+    stage = Column(Integer)
+    serial_number = Column(Integer)
+
 
 
 def read_match_by_id(db: Session, match_id: uuid.UUID) -> Match:
@@ -60,6 +106,47 @@ def read_all_matches(db: Session, tournament_id: uuid.UUID = None, sort_by_date:
 #     else:
 #         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
 #     return match
+
+def update_match_score(db: Session, match_id: uuid, updates: MatchResult):
+    match = db.query(Match).filter(Match.id == match_id).first()
+    if not match:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
+    
+    if match.format_id == 1: # trqbwa da proverq chisloto
+        if (
+            updates.score_a > match.end_condition or updates.score_b > match.end_condition or
+            (updates.score_a == match.end_condition and updates.score_b == match.end_condition) or
+            (updates.score_a != match.end_condition and updates.score_b != match.end_condition)
+        ):            
+            raise ScoreLimit(match.end_condition)
+        
+    match.score_a = updates.score_a
+    match.score_b = updates.score_b
+    match.result_code = updates.result_code
+    
+    db.add(match)
+    db.commit()
+    db.refresh(match)
+    
+    return match
+
+def update_match_date(db: Session, match_id: uuid, updates: MatchUpdateTime):
+    match = db.query(Match).filter(Match.id == match_id).first()
+    if not match:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
+    
+    if match.format_id == 2: # trqbwa da proverq chisloto
+        match.start_time = updates.start_time
+        match.end_time = updates.start_time + timedelta(minutes=match.end_condition)
+    else:
+        match.start_time = updates.start_time
+        match.end_time = updates.end_time
+    
+    db.add(match)
+    db.commit()
+    db.refresh(match)
+    
+    return match
 
 
 def delete_match(db: Session, match_id: uuid.UUID) -> bool:
@@ -108,20 +195,20 @@ def update_player_stats_after_match(db: Session, match_id: uuid.UUID):
             if match.result_code == 'player 1':
                 player_1.wins += 1
                 player_2.losses += 1
-                player_1.points += tournament.win_points
+                #player_1.points += tournament.win_points
                 participant_1.score += tournament.win_points
 
             elif match.result_code == 'player 2':
                 player_1.losses += 1
                 player_2.wins += 1
-                player_2.points += tournament.win_points
+                #player_2.points += tournament.win_points
                 participant_2.score += tournament.win_points
 
             else:
                 player_1.draws += 1
                 player_2.draws += 1
-                player_2.points += tournament.draw_points
-                player_2.points += tournament.draw_points
+                #player_2.points += tournament.draw_points
+                #player_2.points += tournament.draw_points
                 participant_1.score += tournament.draw_points
                 participant_2.score += tournament.draw_points
 

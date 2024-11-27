@@ -25,6 +25,7 @@ class Match(Base):
     )
 
     format_id = Column(Integer, ForeignKey("match_format.id"), nullable = False)
+    end_condition = Column(Integer, nullable=False)
     player_a_id = Column(UUID, ForeignKey("players.id"))
     player_b_id = Column(UUID, ForeignKey("players.id"))
     score_a = Column(Integer)
