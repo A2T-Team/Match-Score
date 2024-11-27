@@ -27,6 +27,23 @@ def is_admin(db: Session, user_id: uuid.UUID) -> bool:
     return user.role == Role.ADMIN
 
 
+def is_director(db: Session, user_id: uuid.UUID) -> bool:
+    """
+    Check if a user has the director role.
+
+    Parameters:
+        db (Session): An instance of the SQLAlchemy Session class.
+        user_id (uuid.UUID): The UUID of the user to check for the director role.
+
+    Returns:
+        bool: True if the user has the director role, False otherwise.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+
+    return user.role == Role.DIRECTOR
+
+
+
 def get_id_by_username(db: Session, username: str) -> uuid.UUID:
 
     """
