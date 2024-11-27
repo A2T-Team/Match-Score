@@ -55,23 +55,6 @@ def create_match(db: Session, match_data: CreateMatchRequest) -> Match:
     return new_match
 
 
-    format_id = Column(Integer, ForeignKey("match_format.id"), nullable = False)
-    end_condition = Column(Integer, nullable=False)
-    player_a_id = Column(UUID, ForeignKey("players.id"))
-    player_b_id = Column(UUID, ForeignKey("players.id"))
-    score_a = Column(Integer)
-    score_b = Column(Integer)
-    result_code = Column(Integer, ForeignKey("result_codes.id"))
-    start_time = Column(DateTime)
-    end_time = Column(DateTime)
-    prize = Column(Integer)
-    author_id = Column(UUID, ForeignKey("users.id"), nullable=False)
-    tournament_id = Column(UUID, ForeignKey("tournaments.id"))
-    stage = Column(Integer)
-    serial_number = Column(Integer)
-
-
-
 def read_match_by_id(db: Session, match_id: uuid.UUID) -> Match:
     match = db.query(Match).filter(Match.id == match_id).first()
     if not match:
