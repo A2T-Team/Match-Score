@@ -1,8 +1,9 @@
 from pydantic import BaseModel, Field, field_validator, FieldValidationInfo
-from src.models.user import Role
+from src.models.user import Role, RequestType
 from typing import Optional
 import re
 import uuid
+from datetime import datetime
 
 
 class CreateUserRequest(BaseModel):
@@ -133,3 +134,38 @@ class UpdateUserRequest(BaseModel):
         if value not in ["user", "player", "director", "admin"]:
             raise ValueError("Invalid role")
         return value
+
+
+class CreateRequest(BaseModel):
+    """
+    Schema for creating a new request.
+    """
+
+    request_type: RequestType = Field(examples=["Promote Request", "Demote Request", "Delete Request",
+                                                "Link Request", "Unlink Request"])
+    request_reason: str = Field(min_length=10, max_length=100, examples=["If you want to link your account to a player,"
+                                                                         " write only the player's firstname"
+                                                                         " and lastname here."])
+
+    @field_validator("request_reason")
+    def validate_request_data(cls, value):
+        """
+        Validate request_data to be a string.
+        """
+
+        if not isinstance(value, str):
+            raise ValueError("Request reason must be a string")
+        return value
+
+
+class RequestResponse(BaseModel):
+    """
+    Schema for returning request data.
+    """
+    request_id: uuid.UUID
+    request_type: RequestType
+    user_id: uuid.UUID
+    request_reason: str
+    created_at: datetime
+
+
