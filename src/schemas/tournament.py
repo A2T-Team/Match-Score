@@ -19,7 +19,6 @@ class TournamentSchema(BaseModel):
     draw_points: int = Field(
         ge=0, description="How many points the players get on draw"
     )
-    author_id: UUID = Field(description="Author ID")
 
     @field_validator("format")
     def validate_format(cls, value):
