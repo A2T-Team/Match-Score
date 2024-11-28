@@ -22,21 +22,21 @@ def create_request(token: Annotated[str, Header()], request: CreateRequest, db: 
     return creating_request(db, request, token)
 
 
-@router.get("/admin")
+@router.get("/")
 def get_all_requests(token: Annotated[str, Header()], db: Session = Depends(get_db)):
     return view_requests(db, token)
 
 
-@router.get("/admin/{request_id}")
-def open_request(token: Annotated[str, Header()], request_id: UUID, db: Session = Depends(get_db)):
+@router.get("/{request_id}")
+def open_by_id(token: Annotated[str, Header()], request_id: UUID, db: Session = Depends(get_db)):
     return open_request(db, request_id, token)
 
 
-@router.put("/admin/{request_id}/accept")
-def accept_request(token: Annotated[str, Header()], request_id: UUID, db: Session = Depends(get_db)):
+@router.put("/{request_id}/accept")
+def accept(token: Annotated[str, Header()], request_id: UUID, db: Session = Depends(get_db)):
     return accept_request(db, request_id, token)
 
 
-@router.delete("/admin/{request_id}/reject")
-def reject_request(token: Annotated[str, Header()], request_id: UUID, db: Session = Depends(get_db)):
+@router.delete("/{request_id}/reject")
+def reject(token: Annotated[str, Header()], request_id: UUID, db: Session = Depends(get_db)):
     return reject_request(db, request_id, token)

@@ -52,18 +52,18 @@ def search_user_by_email(email: str, token: Annotated[str, Header()], db: Sessio
     return user
 
 
-@router.put("/me/email")
+@router.put("/me/email/update")
 def update_my_email(token: Annotated[str, Header()], new: UpdateEmailRequest, db: Session = Depends(get_db)):
     new_credentials = update_email(db, new, token)
     return new_credentials
 
 
-@router.put("/admin/users/{username}")
+@router.put("/{username}/update")
 def update_user_credentials(token: Annotated[str, Header()], username: str, new: UpdateUserRequest, db: Session = Depends(get_db)):
     new_credentials = update_user(db, new, username, token)
     return new_credentials
 
 
-@router.delete("/admin/users/delete/{username}")
+@router.delete("/{username}/delete")
 def delete_user_by_username(token: Annotated[str, Header()], username: str, db: Session = Depends(get_db)):
     return delete_user(db, username, token)

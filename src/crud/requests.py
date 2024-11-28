@@ -52,6 +52,9 @@ def creating_request(db: Session, request: CreateRequest, token: str) -> Request
         return BadRequest("There is no role to demote to")
 
     if db_request.request_type == RequestType.LINK:
+        potential_player = db.query(Player).filter(Player.user_id == user_id).first()
+        if potential_player:
+            return BadRequest("You are already linked to a player")
         if not re.match(r"[a-zA-Z]+\s[a-zA-Z]+", request.request_reason):
             return BadRequest("Invalid player name format")
 
@@ -162,7 +165,7 @@ def accept_request(db: Session, request_id: uuid.UUID, token: str) -> (str | Not
     if request.request_type == RequestType.LINK:
 
         firstname, lastname = request.request_reason.split(" ")
-        player = db.query(Player).filter(Player.firstname == firstname, Player.lastname == lastname).first()
+        player = db.query(Player).filter(Player.first_name == firstname, Player.last_name == lastname).first()
 
         if not player:
             db.delete(request)
@@ -172,7 +175,7 @@ def accept_request(db: Session, request_id: uuid.UUID, token: str) -> (str | Not
         update_player_with_user(db, player.id, request.user_id)
 
     if request.request_type == RequestType.UNLINK:
-        player = db.query(Player).filter(user.id==request.user_id).first()
+        player = db.query(Player).filter(Player.user_id==request.user_id).first()
         player.user_id = None
 
     db.delete(request)
