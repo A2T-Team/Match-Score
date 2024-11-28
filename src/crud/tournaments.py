@@ -2,12 +2,13 @@ from src.schemas.tournament import TournamentSchema, Participant, UpdateTourname
 from src.models.tournament import Tournament, TournamentFormat, TournamentParticipants
 from src.models.match import Match, MatchFormat
 from src.models.player import Player
+from src.models.user import User
 from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc, and_
 from src.common.custom_responses import AlreadyExists
 from sqlalchemy.exc import IntegrityError
 from uuid import UUID
-from src.common.custom_exceptions import NotFound, InvalidNumberOfPlayers
+from src.common.custom_exceptions import NotFound, InvalidNumberOfPlayers, InvalidRequest
 import random
 from datetime import datetime
 import logging
@@ -37,7 +38,8 @@ def match_format_to_id(value: str, db_session: Session):
 
 def create(
     tournament: TournamentSchema,
-    db_session: Session,  # current_user_id: int
+    current_user: User,
+    db_session: Session,
 ):
     """
     Create a new tournament in the database, using the provided TournamentSchema object
@@ -74,7 +76,7 @@ def create(
         prize=tournament.prize,
         win_points=tournament.win_points,
         draw_points=tournament.draw_points,
-        author_id=tournament.author_id,
+        author_id=current_user.id,
     )
     db_session.add(db_tournament)
     db_session.commit()
@@ -101,7 +103,7 @@ def tournament_name_exists(db: Session, tournament_name: str) -> bool:
 def get_tournament(
     db_session: Session,
     tournament_id: UUID,
-) -> Tournament | None:  # TODO current_user: User = Depends(get_current_user))
+) -> Tournament | None:
     """
     Retrieve a tournament by its ID from the database.
 
@@ -118,27 +120,7 @@ def get_tournament(
     )
 
     return tournament
-
-
-# def get_matches_in_tournament(db_session: Session, tournament_id: UUID) -> list[Match]:
-#     """
-#     Retrieve all matches associated with a specific tournament.
-
-#     Parameters:
-#         db_session (Session): The database session to use for the query.
-#         tournament_id (UUID): The ID of the tournament whose matches are to be retrieved.
-
-#     Returns:
-#         list[Match]: A list of Match objects associated with the specified tournament.
-#                      Returns an empty list if no matches are found.
-#     """
-
-#     matches = db_session.query(Match).filter(Match.tournament_id == tournament_id).all()
-#     if not matches:
-#         return []
-
-#     return matches
-
+    
 
 def view_all_tournaments(
     db_session: Session,
@@ -146,8 +128,7 @@ def view_all_tournaments(
     limit: int = 100,
     sort: str = None,
     search: str = None,
-):  # TODO ccurrent_user: User = Depends(get_current_user)
-
+): 
     tournaments = db_session.query(Tournament)
 
     if search:
@@ -298,11 +279,21 @@ def get_tournament_format(tournament_id: UUID, db_session: Session):
     return tournament.format.type
 
 
+def has_matches(tournament: Tournament):
+    return bool(tournament.matches)
+
+
 def create_matches(tournament_id: UUID, db_session: Session):
     tournament = get_tournament(db_session=db_session, tournament_id=tournament_id)
+    if has_matches(tournament):
+        raise InvalidRequest("Tournament already has matches")
+
     if tournament.format.type == "knockout":
         matches = _create_knockout_matches(tournament, db_session)
-    
+    elif tournament.format.type == "league":
+        matches = _create_league_matches(tournament, db_session)
+
+
     return matches
 
 
@@ -336,6 +327,34 @@ def _create_match(
 
 
 def _create_knockout_matches(tournament: Tournament, db_session: Session):
+    if not validate_number_of_players(tournament):
+        raise InvalidNumberOfPlayers(number_of_players=len(tournament.participants))
+
+    all_matches = []
+    players_group_1, players_group_2 = randomize_players(tournament)
+    all_stages = calculate_stages(tournament)
+    stage = 0
+    serial_number = 0
+    for player_a_id, player_b_id in zip(players_group_1, players_group_2):
+        temp_match = _create_match(
+            db_session, tournament, player_a_id, player_b_id, stage, serial_number
+        )
+        serial_number += 1
+        all_matches.append(temp_match)
+
+    number_of_stage_matches = len(tournament.participants) // 2
+    for stage in range(1, all_stages):
+        number_of_stage_matches = number_of_stage_matches // 2
+        for serial_number in range(number_of_stage_matches):
+            temp_match = _create_match(
+                db_session, tournament, stage=stage, serial_number=serial_number
+            )
+            all_matches.append(temp_match)
+
+    return all_matches
+
+
+def _create_league_matches(tournament: Tournament, db_session: Session):
     if not validate_number_of_players(tournament):
         raise InvalidNumberOfPlayers(number_of_players=len(tournament.participants))
 

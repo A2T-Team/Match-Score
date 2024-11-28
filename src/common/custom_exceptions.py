@@ -13,6 +13,13 @@ class InvalidNumberOfPlayers(Exception):
     def __init__(self, number_of_players: int):
         self.number_of_players = number_of_players
         super().__init__(
-            f"Knockout tournament has {number_of_players} players. "
-            "The number must be power of two."
+            f"Knockout tournament has {number_of_players} player(s). "
+            "The number of players must be a power of two."
         )
+
+
+class InvalidRequest(Exception):
+    """Custom exception for invalid request"""
+
+    def __init__(self, error_messag: str):
+        super().__init__(error_messag)
