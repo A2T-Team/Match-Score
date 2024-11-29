@@ -8,13 +8,13 @@ class CreatePlayerRequest(BaseModel):
     first_name: str = Field(min_length=2, max_length=50, examples=["John"], description="Player's first name, between 2 and 50 characters")
     last_name: str = Field(min_length=2, max_length=50, examples=["Doe"], description="Player's last name, between 2 and 50 characters")
     country: str = Field(min_length=2, max_length=50, examples=["Bulgaria"], description="For which country the player competes")
-    team_id: uuid.UUID = Field(examples=['5sg62l82-1279-9834-sfhs-9s4j9sjhgjk2'], description="UUID of the team the player belongs to")
+    team_id: Optional[uuid.UUID] = Field(examples=['7e3d1be2-2f6f-4bb3-91a5-2f6157a3f089'], description="UUID of the team the player belongs to")
     # matches_played: int = Field(0, description="Matches played")
     # wins: int = Field(0, description="Wins")
     # losses: int = Field(0, description="Losses")
     # draws: int = Field(0, description="Draws")
     # points: int = Field(0, description="Points")
-    user_id: uuid.UUID = Field(examples=['7e3d1be2-2f6f-4bb3-91a5-2f6157a3f089'], description="User ID that relates to the player")
+    user_id: Optional[uuid.UUID] = Field(examples=['7e3d1be2-2f6f-4bb3-91a5-2f6157a3f089'], description="User ID that relates to the player")
 
     @field_validator("first_name")
     def validate_first_name(cls, value: str) -> str:
@@ -32,6 +32,12 @@ class CreatePlayerRequest(BaseModel):
     def validate_country(cls, value: str) -> str:
         if not value.isalpha():
             raise ValueError("Country must contain only alphabetic characters")
+        return value
+    
+    @field_validator("team_id", "user_id", mode="before")
+    def handle_empty_strings(cls, value):
+        if value == "":
+            return None
         return value
     # @field_validator("matches_played", "wins", "losses", "draws", "points")
     # def validate_non_negative(cls, value: int) -> int:
@@ -56,10 +62,14 @@ class PlayerWithUser(BaseModel):
 
 
 class PlayerResponse(CreatePlayerRequest):
-    id: uuid.UUID = Field(
-        description="Unique identifier for the player",
-        examples=['2bd7f8b4-8ac1-45b7-bf3d-1a3c53bc9a9f']
-    )
+    id: uuid.UUID
+    first_name: str
+    last_name: str
+    country: str
+    team_id: Optional[uuid.UUID] = None
+    user_id: Optional[uuid.UUID] = None
+
+
 
     # model_config = {
     #     "from_attributes": True,  # Enables ORM mode
