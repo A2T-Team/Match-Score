@@ -33,7 +33,7 @@ class Match(Base):
     result_code = Column(Integer, ForeignKey("result_codes.id"))
     start_time = Column(DateTime)
     end_time = Column(DateTime)
-    #prize = Column(Integer)
+    prize = Column(Integer)
     author_id = Column(UUID,  nullable=False) #ForeignKey("users.id"),
     tournament_id = Column(UUID, ForeignKey("tournaments.id"))
     stage = Column(Integer)

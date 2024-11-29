@@ -10,7 +10,7 @@ class CreateMatchRequest(BaseModel):
     player_b: uuid.UUID = Field(description="Second player ID")
     start_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM'"])
     end_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM'"])
-    #prize: Optional[int] = Field(description="Prize for the match, must be 0 or positive")
+    prize: Optional[int] = Field(description="Prize for the match, must be 0 or positive")
     author_id: uuid.UUID = Field(description="Author ID")
     tournament_id: Optional[uuid.UUID] = Field(description="Tournament ID")
     stage: Optional[int] = Field(description="Stage if in tournament")
@@ -25,16 +25,16 @@ class CreateMatchRequest(BaseModel):
             raise ValueError("Match format must be 'time' or 'score' for non-tournament matches.")
         return value
 
-    # @field_validator("prize", mode="before")
-    # def validate_prize(cls, value, info: FieldValidationInfo):
-    #     tournament_id = info.data.get("tournament_id")
-    #     if value == "":
-    #         return None
-    #     if tournament_id and value is not None:
-    #         raise ValueError("Prize should not be specified manually if the match is part of a tournament.")
-    #     if value is not None and value < 0:
-    #         raise ValueError("Prize must be 0 or positive")
-    #     return value
+    @field_validator("prize", mode="before")
+    def validate_prize(cls, value, info: FieldValidationInfo):
+        tournament_id = info.data.get("tournament_id")
+        if value == "":
+            return None
+        if tournament_id and value is not None:
+            raise ValueError("Prize should not be specified manually if the match is part of a tournament.")
+        if value is not None and value < 0:
+            raise ValueError("Prize must be 0 or positive")
+        return value
 
     @field_validator("end_condition")
     def validate_end_condition(cls, value, info: FieldValidationInfo):
@@ -97,8 +97,8 @@ class CreateMatchRequest(BaseModel):
 #     prize: Optional[int] = None
 
 class MatchResult(BaseModel):
-    score_a: int = Field(description="Score for Player A", ge=0)
-    score_b: int = Field(description="Score for Player B", ge=0)
+    score_a: int = Field(description="Score for Player A")
+    score_b: int = Field(description="Score for Player B")
     result_code: str = Field(description="Result code for the match")
 
 
@@ -114,8 +114,8 @@ class MatchResult(BaseModel):
         return value
 
 class MatchUpdateTime(BaseModel):
-    start_time: datetime = Field(description="Updated match start time")
-    end_time: Optional[datetime] = Field(description="Updated match end time")
+    start_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM'"], description="Updated match start time")
+    end_time: Optional[datetime] = Field(examples=["Format must be 'YYYY/MM/DD HH:MM'"], description="Updated match end time")
 
     @field_validator("start_time", mode="before")
     def validate_start_time(cls, value):
@@ -125,6 +125,7 @@ class MatchUpdateTime(BaseModel):
             except ValueError:
                 raise ValueError("Expected format is 'YYYY/MM/DD HH:MM'")
         return value
+    
 
     @field_validator("end_time", mode="before")
     def validate_end_time(cls, value, info: FieldValidationInfo):

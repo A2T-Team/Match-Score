@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from src.models.match import Match, MatchFormat
+from src.models.match import Match, MatchFormat, ResultCodes
 from src.models.player import Player
 from src.models.tournament import Tournament, TournamentParticipants
 from src.common.custom_exceptions import NotFound, ScoreLimit
@@ -15,6 +15,10 @@ def match_format_to_id(value: str, db_session: Session):
         return None
 
     return format.id
+
+def match_result_to_id(value: str, db_session: Session):
+    result = db_session.query(ResultCodes).filter(ResultCodes.result == value).first()
+    return result.id
 
 # def get_match_format_id(match_data, db_session):
 #     if match_data.tournament_id:
@@ -38,7 +42,7 @@ def create_match(db: Session, match_data: CreateMatchRequest) -> Match:
             player_b_id = match_data.player_b,
             start_time = match_data.start_time,
             end_time = match_data.end_time,
-            #prize = 0,
+            prize = 0,
             author_id = match_data.author_id,
             tournament_id = match_data.tournament_id,
             stage = match_data.stage,
@@ -53,7 +57,7 @@ def create_match(db: Session, match_data: CreateMatchRequest) -> Match:
             player_b_id = match_data.player_b,
             start_time = match_data.start_time,
             end_time = match_data.end_time,
-            #prize = match_data.prize,
+            prize = match_data.prize,
             author_id = match_data.author_id,
         )
 
@@ -99,9 +103,16 @@ def read_all_matches(db: Session, tournament_id: uuid.UUID = None, sort_by_date:
 #         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
 #     return match
 
-def check_score_limit(match, score_a, score_b):
-    if score_a > match.end_condition or score_b > match.end_condition or (score_a == match.end_condition and score_b == match.end_condition) or (score_a != match.end_condition and score_b != match.end_condition):
-        raise ScoreLimit(match.end_condition)
+def check_score_limit(end_condition, score_a, score_b):
+
+    print(f"end_condition: {end_condition}, score_a: {score_a}, score_b: {score_b}")
+    if end_condition is None:
+        raise ValueError("End condition cannot be None.")
+    if score_a is None or score_b is None:
+        raise ValueError("Scores cannot be None.")
+
+    if score_a > end_condition or score_b > end_condition or (score_a == end_condition and score_b == end_condition) or (score_a != end_condition and score_b != end_condition):
+        raise ScoreLimit(end_condition)
 
 def update_match_score(db: Session, match_id: uuid, updates: MatchResult):
     match = db.query(Match).filter(Match.id == match_id).first()
@@ -115,12 +126,13 @@ def update_match_score(db: Session, match_id: uuid, updates: MatchResult):
         #     (updates.score_a != match.end_condition and updates.score_b != match.end_condition)
         # ):            
         #     raise ScoreLimit(match.end_condition)
-        check_score_limit(match, updates.score_a, updates.score_b)
+        check_score_limit(int(match.end_condition), int(updates.score_a), int(updates.score_b))
 
         
     match.score_a = updates.score_a
     match.score_b = updates.score_b
-    match.result_code = updates.result_code
+    result_id = match_result_to_id(updates.result_code, db)
+    match.result_code = result_id
     
     db.add(match)
     db.commit()
@@ -163,14 +175,14 @@ def update_player_stats_after_match(db: Session, match_id: uuid.UUID):
             status_code=status.HTTP_404_NOT_FOUND, detail="Match not found"
         )
     
-    player_1 = db.query(Player).filter_by(id=match.player_a).first()
+    player_1 = db.query(Player).filter_by(id=match.player_a_id).first()
 
     if not player_1:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="First player not found"
         )
     
-    player_2 = db.query(Player).filter_by(id=match.player_b).first()
+    player_2 = db.query(Player).filter_by(id=match.player_b_id).first()
 
     if not player_2:
         raise HTTPException(
@@ -187,12 +199,12 @@ def update_player_stats_after_match(db: Session, match_id: uuid.UUID):
             participant_1 = db.query(TournamentParticipants).filter_by(tournament_id=match.tournament_id , player_id=player_1.id).first()
             participant_2 = db.query(TournamentParticipants).filter_by(tournament_id=match.tournament_id , player_id=player_2.id).first()
 
-            if match.result_code == 'player 1':
+            if match.result_code == 1:
                 player_1.wins += 1
                 player_2.losses += 1
                 participant_1.score += tournament.win_points
 
-            elif match.result_code == 'player 2':
+            elif match.result_code == 2:
                 player_1.losses += 1
                 player_2.wins += 1
                 participant_2.score += tournament.win_points
@@ -204,11 +216,11 @@ def update_player_stats_after_match(db: Session, match_id: uuid.UUID):
                 participant_2.score += tournament.draw_points
 
         else:
-            if match.result_code == 'player 1':
+            if match.result_code == 1:
                 player_1.wins += 1
                 player_2.losses += 1
 
-            elif match.result_code == 'player 2':
+            elif match.result_code == 2:
                 player_1.losses += 1
                 player_2.wins += 1
 
@@ -217,11 +229,11 @@ def update_player_stats_after_match(db: Session, match_id: uuid.UUID):
                 player_2.draws += 1
     
     else:
-        if match.result_code == 'player 1':
+        if match.result_code == 1:
             player_1.wins += 1
             player_2.losses += 1
 
-        elif match.result_code == 'player 2':
+        elif match.result_code == 2:
             player_1.losses += 1
             player_2.wins += 1
 

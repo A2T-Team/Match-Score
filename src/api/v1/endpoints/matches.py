@@ -12,19 +12,19 @@ router = APIRouter()
 # matches_router = APIRouter(prefix="/matches", tags=["Matches"])
 
 
-@router.post("/", response_model=MatchResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED) #, response_model=MatchResponse
 def post_match(request: CreateMatchRequest, db: Session = Depends(get_db)):
     return matches.create_match(db, request)
     #return MatchResponse.model_validate(new_match)
 
 
-@router.get("/{match_id}", response_model=MatchResponse)
+@router.get("/{match_id}") #, response_model=MatchResponse
 def get_match(match_id: uuid.UUID, db: Session = Depends(get_db)):
     return matches.read_match_by_id(db, match_id)
     #return MatchResponse.model_validate(match)
 
 
-@router.get("/", response_model=list[MatchResponse])
+@router.get("/")#, response_model=list[MatchResponse]
 def get_all_matches(
     tournament_id: uuid.UUID = None,
     sort_by_date: bool = False,
@@ -38,13 +38,13 @@ def get_all_matches(
 #     match = matches.update_match(db, match_id, updates)
 #     return MatchResponse.model_validate(match)
 
-@router.put("/{match_id}", response_model=MatchResponse)
+@router.put("/{match_id}/score") #, response_model=MatchResponse
 def put_match_score(match_id: uuid.UUID, updates: MatchResult, db: Session = Depends(get_db)):
     return matches.update_match_score(db, match_id, updates)
     #return MatchResponse.model_validate(match)
 
-@router.put("/{match_id}", response_model=MatchResponse)
-def put_match_score(match_id: uuid.UUID, updates: MatchUpdateTime, db: Session = Depends(get_db)):
+@router.put("/{match_id}/date") #, response_model=MatchResponse
+def put_match_date(match_id: uuid.UUID, updates: MatchUpdateTime, db: Session = Depends(get_db)):
     return matches.update_match_date(db, match_id, updates)
     #return MatchResponse.model_validate(match)
 
