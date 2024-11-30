@@ -3,8 +3,8 @@ from src.schemas.tournament import (
     TournamentSchema,
     CreateTournamentResponse,
     Participant,
-    UpdateTournamentDates,
-    UpdateDatesResponse,
+    UpdateTournamentRequest,
+    UpdateTournamentResponse,
 )
 from psycopg2.errors import UniqueViolation
 from sqlalchemy.exc import IntegrityError
@@ -12,7 +12,7 @@ from src.common.custom_responses import (
     AlreadyExists,
     InternalServerError,
     NotFound,
-    NoContent,
+    OK,
     Unauthorized,
     ForbiddenAccess,
     BadRequest,
@@ -24,6 +24,7 @@ from src.crud import tournaments
 from uuid import UUID
 from src.core.auth import get_current_user
 from src.models.user import User, Role
+from typing import Literal
 
 import logging
 
@@ -58,7 +59,7 @@ def create_tournament(
         raise ForbiddenAccess()
 
     try:
-        return tournaments.create(
+        tournament = tournaments.create(
             tournament=tournament, current_user=current_user, db_session=db_session
         )
 
@@ -74,6 +75,24 @@ def create_tournament(
                     f"An unexpected integrity error occurred: {str(e)}"
                 )
         return InternalServerError(f"Database error: {str(e)}")
+
+    response = CreateTournamentResponse(
+        tournament_id=tournament.id,
+        name=tournament.name,
+        format=tournament.format.type,
+        match_format=tournament.match_format.type,
+        start_time=tournament.start_time,
+        end_time=tournament.end_time,
+        prize=tournament.prize,
+        win_points=tournament.win_points,
+        draw_points=tournament.draw_points,
+        author_id=tournament.author_id,
+        total_participants=len(tournament.participants),
+        participants=[],
+        total_matches=len(tournament.matches),
+        matches=[],
+    )
+    return response
 
 
 @router.get("/{tournament_id}")
@@ -119,10 +138,10 @@ def view_tournament(tournament_id: UUID, db_session: Session = Depends(get_db)):
 
 @router.get("/")
 def view_all_tournaments(
-    offset: int = 0,
-    limit: int = 100,
-    sort: str = None,
-    search: str = None,
+    offset: int = Query(description="offset the number of tournaments returned", default=0, ge=0),
+    limit: int = Query(description="limit the number of tournaments returned", default=10, ge=1, le=100),
+    sort: Literal["asc", "desc"] | None = Query(description="sort by start date", default=None),
+    search: str | None = Query(description="search by tournament name", default=None),
     db_session: Session = Depends(get_db),
 ):
     return tournaments.view_all_tournaments(
@@ -149,6 +168,9 @@ def add_players(
     )
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
+    
+    if tournaments.has_matches(tournament):
+        raise BadRequest("Tournament already has matches")
 
     result = tournaments.add_participants(db_session, tournament_id, participants)
     return result
@@ -173,15 +195,18 @@ def delete_players(
     )
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
+    
+    if tournaments.has_matches(tournament):
+        raise BadRequest("Tournament already has matches")
 
     result = tournaments.delete_players(db_session, tournament_id, participants)
     return result
 
 
-@router.put("/{tournament_id}/dates")
-def update_tournament_dates(
+@router.patch("/{tournament_id}")
+def update_tournament(
     tournament_id: UUID,
-    dates: UpdateTournamentDates,
+    data: UpdateTournamentRequest,
     db_session: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -198,15 +223,19 @@ def update_tournament_dates(
 
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
+    
+    try:
+        tournament = tournaments.update_tournament(tournament_id, data, db_session)
+    except custom_exceptions.InvalidRequest as e:
+        return BadRequest(content=str(e))
 
-    tournament = tournaments.update_dates(tournament_id, dates, db_session)
-
-    response = UpdateDatesResponse(
+    response = UpdateTournamentResponse(
         tournament_id=tournament.id,
         name=tournament.name,
         format=tournament.format.type,
         start_time=tournament.start_time,
         end_time=tournament.end_time,
+        prize=tournament.prize,
     )
     return response
 
@@ -231,7 +260,7 @@ def create_matches(
         return NotFound(key="tournament_id", key_value=tournament_id)
 
     try:
-        matches = tournaments.create_matches(tournament_id, db_session)
+        matches = tournaments.create_matches(tournament_id, db_session, current_user)
     except (
         custom_exceptions.InvalidNumberOfPlayers,
         custom_exceptions.InvalidRequest,
@@ -254,8 +283,32 @@ def create_matches(
                 else "tbd"
             ),
         }
-        for match in matches
+        for match in sorted(matches, key=(lambda x: x.stage))
     ]
+
+
+@router.delete("/{tournament_id}")
+def delete_tournament(
+    tournament_id: UUID,
+    db_session: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user is None:
+        raise Unauthorized(content="The user is not authorized to perform this action")
+
+    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
+        raise ForbiddenAccess()
+
+    tournament = tournaments.get_tournament(
+        db_session,
+        tournament_id,
+    )
+    if tournament is None:
+        return NotFound(key="tournament_id", key_value=tournament_id)
+    
+    
+    tournaments.delete_tournament(db_session, tournament_id)
+    return OK(content="Tournament deleted")
 
 
 @router.put("/{tournament_id}/matches/{match_id}")

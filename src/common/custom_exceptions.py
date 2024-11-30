@@ -10,12 +10,18 @@ class NotFound(Exception):
 class InvalidNumberOfPlayers(Exception):
     """Custom exception for errors with count of players."""
 
-    def __init__(self, number_of_players: int):
+    def __init__(self, number_of_players: int, tournament_format: str):
         self.number_of_players = number_of_players
-        super().__init__(
-            f"Knockout tournament has {number_of_players} player(s). "
-            "The number of players must be a power of two."
-        )
+        if tournament_format == "knockout":
+            super().__init__(
+                f"Knockout tournament has {number_of_players} player(s). "
+                "The number of players must be a power of two."
+            )
+        else:
+            super().__init__(
+                f"League tournament has {number_of_players} player(s). "
+                "The number of players must be at least 3"
+            )
 
 
 class InvalidRequest(Exception):
