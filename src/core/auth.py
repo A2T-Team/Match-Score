@@ -19,7 +19,7 @@ _ACCESS_TOKEN_EXPIRE = int(os.getenv("JWT_EXPIRATION"))
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/token/")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/token/", auto_error=False)
 
 
 # utility funcs
@@ -65,6 +65,8 @@ def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    if token is None:
+        return None
 
     try:
         payload = jwt.decode(token, _SECRET_KEY, algorithms=[_ALGORITHM])
@@ -75,11 +77,8 @@ def get_current_user(
         TokenData(user_identifier=user_identifier)
 
     except JWTError:
-        raise credential_exception
+        return None
 
     user = session.query(User).filter(User.id == user_identifier).first()
-
-    if user is None:
-        raise credential_exception
 
     return user
