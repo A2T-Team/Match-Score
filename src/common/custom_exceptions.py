@@ -20,7 +20,7 @@ class InvalidNumberOfPlayers(Exception):
         else:
             super().__init__(
                 f"League tournament has {number_of_players} player(s). "
-                "The number of players must be at least 3"
+                "The number of players must be at least 3 and even"
             )
 
 

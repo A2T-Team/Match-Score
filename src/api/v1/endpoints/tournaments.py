@@ -53,10 +53,10 @@ def create_tournament(
     """
 
     if current_user is None:
-        raise Unauthorized(content="The user is not authorized to perform this action")
+        return Unauthorized(content="The user is not authorized to perform this action")
 
     if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
-        raise ForbiddenAccess()
+        return ForbiddenAccess()
 
     try:
         tournament = tournaments.create(
@@ -157,10 +157,10 @@ def add_players(
     current_user: User = Depends(get_current_user),
 ):
     if current_user is None:
-        raise Unauthorized(content="The user is not authorized to perform this action")
+        return Unauthorized(content="The user is not authorized to perform this action")
 
     if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
-        raise ForbiddenAccess()
+        return ForbiddenAccess()
 
     tournament = tournaments.get_tournament(
         db_session,
@@ -170,7 +170,7 @@ def add_players(
         return NotFound(key="tournament_id", key_value=tournament_id)
     
     if tournaments.has_matches(tournament):
-        raise BadRequest("Tournament already has matches")
+        return BadRequest("Tournament already has matches")
 
     result = tournaments.add_participants(db_session, tournament_id, participants)
     return result
@@ -184,10 +184,10 @@ def delete_players(
     current_user: User = Depends(get_current_user),
 ):
     if current_user is None:
-        raise Unauthorized(content="The user is not authorized to perform this action")
+        return Unauthorized(content="The user is not authorized to perform this action")
 
     if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
-        raise ForbiddenAccess()
+        return ForbiddenAccess()
 
     tournament = tournaments.get_tournament(
         db_session,
@@ -197,7 +197,7 @@ def delete_players(
         return NotFound(key="tournament_id", key_value=tournament_id)
     
     if tournaments.has_matches(tournament):
-        raise BadRequest("Tournament already has matches")
+        return BadRequest("Tournament already has matches")
 
     result = tournaments.delete_players(db_session, tournament_id, participants)
     return result
@@ -211,10 +211,10 @@ def update_tournament(
     current_user: User = Depends(get_current_user),
 ):
     if current_user is None:
-        raise Unauthorized(content="The user is not authorized to perform this action")
+        return Unauthorized(content="The user is not authorized to perform this action")
 
     if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
-        raise ForbiddenAccess()
+        return ForbiddenAccess()
 
     tournament = tournaments.get_tournament(
         db_session,
@@ -247,10 +247,10 @@ def create_matches(
     current_user: User = Depends(get_current_user),
 ):
     if current_user is None:
-        raise Unauthorized(content="The user is not authorized to perform this action")
+        return Unauthorized(content="The user is not authorized to perform this action")
 
     if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
-        raise ForbiddenAccess()
+        return ForbiddenAccess()
 
     tournament = tournaments.get_tournament(
         db_session,
@@ -294,10 +294,10 @@ def delete_tournament(
     current_user: User = Depends(get_current_user),
 ):
     if current_user is None:
-        raise Unauthorized(content="The user is not authorized to perform this action")
+        return Unauthorized(content="The user is not authorized to perform this action")
 
     if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
-        raise ForbiddenAccess()
+        return ForbiddenAccess()
 
     tournament = tournaments.get_tournament(
         db_session,

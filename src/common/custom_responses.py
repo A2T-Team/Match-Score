@@ -1,6 +1,5 @@
 from fastapi import Response
 from starlette.responses import JSONResponse
-from fastapi import HTTPException
 
 
 class BadRequest(JSONResponse):
@@ -13,18 +12,14 @@ class Locked(JSONResponse):
         super().__init__(status_code=400, content={"detail": f"{content} is locked"})
 
 
-class Unauthorized(HTTPException):
+class Unauthorized(JSONResponse):
     def __init__(self, content=""):
-        super().__init__(
-            status_code=401, detail=content, headers={"WWW-Authenticate": "Bearer"}
-        )
+        super().__init__(status_code=401, content={"detail": content})
 
 
-class ForbiddenAccess(HTTPException):
+class ForbiddenAccess(JSONResponse):
     def __init__(self, content="You don't have permission to access this resource"):
-        super().__init__(
-            status_code=403, detail=content, headers={"WWW-Authenticate": "Bearer"}
-        )
+        super().__init__(status_code=403, content={"detail": content})
 
 
 class OnlyAdminAccess(JSONResponse):
@@ -72,6 +67,4 @@ class NoContent(Response):
 
 class InternalServerError(JSONResponse):
     def __init__(self, content="An unexpected error occurred"):
-        super().__init__(
-            status_code=500, content={"detail": content}
-        )
+        super().__init__(status_code=500, content={"detail": content})
