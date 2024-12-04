@@ -105,16 +105,16 @@ def read_all_matches(db: Session, tournament_id: uuid.UUID = None, sort_by_date:
 
 def check_score_limit(end_condition, score_a, score_b):
 
-    print(f"end_condition: {end_condition}, score_a: {score_a}, score_b: {score_b}")
+    #print(f"end_condition: {end_condition}, score_a: {score_a}, score_b: {score_b}")
     if end_condition is None:
         raise ValueError("End condition cannot be None.")
     if score_a is None or score_b is None:
         raise ValueError("Scores cannot be None.")
 
     if score_a > end_condition or score_b > end_condition or (score_a == end_condition and score_b == end_condition) or (score_a != end_condition and score_b != end_condition):
-        raise ScoreLimit(end_condition)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
 
-def update_match_score(db: Session, match_id: uuid, updates: MatchResult):
+def update_match_score(match_id: uuid, updates: MatchResult, db: Session):
     match = db.query(Match).filter(Match.id == match_id).first()
     if not match:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
@@ -126,7 +126,7 @@ def update_match_score(db: Session, match_id: uuid, updates: MatchResult):
         #     (updates.score_a != match.end_condition and updates.score_b != match.end_condition)
         # ):            
         #     raise ScoreLimit(match.end_condition)
-        check_score_limit(int(match.end_condition), int(updates.score_a), int(updates.score_b))
+        check_score_limit(match.end_condition, updates.score_a, updates.score_b)
 
         
     match.score_a = updates.score_a

@@ -40,7 +40,7 @@ def get_all_matches(
 
 @router.put("/{match_id}/score") #, response_model=MatchResponse
 def put_match_score(match_id: uuid.UUID, updates: MatchResult, db: Session = Depends(get_db)):
-    return matches.update_match_score(db, match_id, updates)
+    return matches.update_match_score(match_id, updates, db)
     #return MatchResponse.model_validate(match)
 
 @router.put("/{match_id}/date") #, response_model=MatchResponse

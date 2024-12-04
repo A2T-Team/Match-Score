@@ -106,6 +106,7 @@ class MatchResult(BaseModel):
     def validate_score(cls, value):
         if value < 0:
             raise ValueError("Score must be above 0")
+        return value
 
     @field_validator("result_code")
     def validate_result_code(cls, value):
