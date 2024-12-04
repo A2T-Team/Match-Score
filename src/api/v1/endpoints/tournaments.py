@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, Query, Path
+from fastapi import APIRouter, Depends, Query, Path, HTTPException, status
 from src.schemas.tournament import (
     TournamentSchema,
     CreateTournamentResponse,
     Participant,
-    UpdateTournamentDates,
-    UpdateDatesResponse,
+    UpdateTournamentRequest,
+    UpdateTournamentResponse,
 )
 from psycopg2.errors import UniqueViolation
 from sqlalchemy.exc import IntegrityError
@@ -12,13 +12,20 @@ from src.common.custom_responses import (
     AlreadyExists,
     InternalServerError,
     NotFound,
-    NoContent,
+    OK,
+    Unauthorized,
+    ForbiddenAccess,
+    BadRequest,
 )
 from src.common import custom_exceptions
 from sqlalchemy.orm import Session
 from src.api.deps import get_db
 from src.crud import tournaments
 from uuid import UUID
+from src.core.auth import get_current_user
+from src.models.user import User, Role
+from typing import Literal
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,37 +34,34 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/", status_code=200)
+@router.post("/", status_code=201)
 def create_tournament(
     tournament: TournamentSchema,
-    db_session: Session = Depends(
-        get_db
-    ),  # TODO current_user_id: int = Depends(get_current_user)
+    db_session: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
-    Create new tournament with the provided details. Access is restricted to users
-    with admin or director role. If a tournament with the same name already exists, a BadRequest
-    response is returned.
+    Create a new tournament. Only accessible to users with admin or director roles.
 
-    Parameters:
-        tournament (TournamentSchema): The request body containing the details of the tournament
-        to be created:
-            name (min_length 5, max_length 50),
-            format ('league' or 'knockout'),
-            match_format ('time' or 'score'),
-            start_time ('YYYY/MM/DD HH:MM'),
-            end_time ('YYYY/MM/DD HH:MM')
-            prize (int: 0 or positive),
-            win_points (How many points the winner gets),
-            draw_points (How many points the players get on draw).
-        current_user_id (int): The ID of the currently authenticated user, provided by the
-        authentication dependency.
+    Args:
+    tournament (TournamentSchema): Tournament details to be created.
+    db_session (Session): Database session (injected).
+    current_user (User): The authenticated user (injected).
 
     Returns:
-        Response: details containing the created tournament or appropriate error messages.
+    The created tournament details or appropriate error messages.
     """
+
+    if current_user is None:
+        return Unauthorized(content="The user is not authorized to perform this action")
+
+    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
+        return ForbiddenAccess()
+
     try:
-        return tournaments.create(tournament=tournament, db_session=db_session)
+        tournament = tournaments.create(
+            tournament=tournament, current_user=current_user, db_session=db_session
+        )
 
     except custom_exceptions.NotFound as e:
         return NotFound(key=e.key, key_value=e.key_value)
@@ -72,17 +76,29 @@ def create_tournament(
                 )
         return InternalServerError(f"Database error: {str(e)}")
 
+    response = CreateTournamentResponse(
+        tournament_id=tournament.id,
+        name=tournament.name,
+        format=tournament.format.type,
+        match_format=tournament.match_format.type,
+        start_time=tournament.start_time,
+        end_time=tournament.end_time,
+        prize=tournament.prize,
+        win_points=tournament.win_points,
+        draw_points=tournament.draw_points,
+        author_id=tournament.author_id,
+        total_participants=len(tournament.participants),
+        participants=[],
+        total_matches=len(tournament.matches),
+        matches=[],
+    )
+    return response
+
 
 @router.get("/{tournament_id}")
-def view_tournament(
-    tournament_id: UUID,
-    db_session: Session = Depends(get_db),
-    # TODO current_user_id: int = Depends(get_current_user),
-):
-    tournament = tournaments.get_tournament(
-        db_session,
-        tournament_id,
-    )  # TODO current_user_id)
+def view_tournament(tournament_id: UUID, db_session: Session = Depends(get_db)):
+
+    tournament = tournaments.get_tournament(db_session, tournament_id)
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
 
@@ -122,17 +138,15 @@ def view_tournament(
 
 @router.get("/")
 def view_all_tournaments(
-    offset: int = 0,
-    limit: int = 100,
-    sort: str = None,
-    search: str = None,
+    offset: int = Query(description="offset the number of tournaments returned", default=0, ge=0),
+    limit: int = Query(description="limit the number of tournaments returned", default=10, ge=1, le=100),
+    sort: Literal["asc", "desc"] | None = Query(description="sort by start date", default=None),
+    search: str | None = Query(description="search by tournament name", default=None),
     db_session: Session = Depends(get_db),
-    # TODO current_user_id: int = Depends(get_current_user),
 ):
-
     return tournaments.view_all_tournaments(
         db_session, offset=offset, limit=limit, sort=sort, search=search
-    )  # TODO current_user_id)
+    )
 
 
 @router.put("/{tournament_id}/players")
@@ -140,14 +154,23 @@ def add_players(
     tournament_id: UUID,
     participants: list[Participant],
     db_session: Session = Depends(get_db),
-    # TODO current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
+    if current_user is None:
+        return Unauthorized(content="The user is not authorized to perform this action")
+
+    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
+        return ForbiddenAccess()
+
     tournament = tournaments.get_tournament(
         db_session,
         tournament_id,
-    )  # TODO current_user_id)
+    )
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
+    
+    if tournaments.has_matches(tournament):
+        return BadRequest("Tournament already has matches")
 
     result = tournaments.add_participants(db_session, tournament_id, participants)
     return result
@@ -158,41 +181,61 @@ def delete_players(
     tournament_id: UUID,
     participants: list[Participant],
     db_session: Session = Depends(get_db),
-    # TODO current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
+    if current_user is None:
+        return Unauthorized(content="The user is not authorized to perform this action")
+
+    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
+        return ForbiddenAccess()
+
     tournament = tournaments.get_tournament(
         db_session,
         tournament_id,
-    )  # TODO current_user_id)
+    )
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
+    
+    if tournaments.has_matches(tournament):
+        return BadRequest("Tournament already has matches")
 
     result = tournaments.delete_players(db_session, tournament_id, participants)
     return result
 
 
-@router.put("/{tournament_id}/dates")
-def update_tournament_dates(
+@router.patch("/{tournament_id}")
+def update_tournament(
     tournament_id: UUID,
-    dates: UpdateTournamentDates,
+    data: UpdateTournamentRequest,
     db_session: Session = Depends(get_db),
-    # TODO current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
+    if current_user is None:
+        return Unauthorized(content="The user is not authorized to perform this action")
+
+    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
+        return ForbiddenAccess()
+
     tournament = tournaments.get_tournament(
         db_session,
         tournament_id,
-    )  # current_user_id)
+    )
+
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
+    
+    try:
+        tournament = tournaments.update_tournament(tournament_id, data, db_session)
+    except custom_exceptions.InvalidRequest as e:
+        return BadRequest(content=str(e))
 
-    tournament = tournaments.update_dates(tournament_id, dates, db_session)
-
-    response = UpdateDatesResponse(
+    response = UpdateTournamentResponse(
         tournament_id=tournament.id,
         name=tournament.name,
         format=tournament.format.type,
         start_time=tournament.start_time,
         end_time=tournament.end_time,
+        prize=tournament.prize,
     )
     return response
 
@@ -201,16 +244,29 @@ def update_tournament_dates(
 def create_matches(
     tournament_id: UUID,
     db_session: Session = Depends(get_db),
-    # TODO current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
+    if current_user is None:
+        return Unauthorized(content="The user is not authorized to perform this action")
+
+    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
+        return ForbiddenAccess()
+
     tournament = tournaments.get_tournament(
         db_session,
         tournament_id,
-    )  # current_user_id)
+    )
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
 
-    matches = tournaments.create_matches(tournament_id, db_session)
+    try:
+        matches = tournaments.create_matches(tournament_id, db_session, current_user)
+    except (
+        custom_exceptions.InvalidNumberOfPlayers,
+        custom_exceptions.InvalidRequest,
+    ) as e:
+        return BadRequest(content=str(e))
+
     return [
         {
             "match_id": match.id,
@@ -227,8 +283,32 @@ def create_matches(
                 else "tbd"
             ),
         }
-        for match in matches
+        for match in sorted(matches, key=(lambda x: x.stage))
     ]
+
+
+@router.delete("/{tournament_id}")
+def delete_tournament(
+    tournament_id: UUID,
+    db_session: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user is None:
+        return Unauthorized(content="The user is not authorized to perform this action")
+
+    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
+        return ForbiddenAccess()
+
+    tournament = tournaments.get_tournament(
+        db_session,
+        tournament_id,
+    )
+    if tournament is None:
+        return NotFound(key="tournament_id", key_value=tournament_id)
+    
+    
+    tournaments.delete_tournament(db_session, tournament_id)
+    return OK(content="Tournament deleted")
 
 
 @router.put("/{tournament_id}/matches/{match_id}")
@@ -236,6 +316,6 @@ def update_match(
     tournament_id: UUID,
     players: list[str],
     db_session: Session = Depends(get_db),
-    # current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     pass

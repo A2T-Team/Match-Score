@@ -19,7 +19,6 @@ class TournamentSchema(BaseModel):
     draw_points: int = Field(
         ge=0, description="How many points the players get on draw"
     )
-    author_id: UUID = Field(description="Author ID")
 
     @field_validator("format")
     def validate_format(cls, value):
@@ -88,12 +87,20 @@ class UpdateSingleMatchInTournament(BaseModel):
     )
 
 
-class UpdateTournamentDates(BaseModel):
-    start_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM"])
-    end_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM"])
+class UpdateTournamentRequest(BaseModel):
+    name: str | None = Field(
+        min_length=5, max_length=50, examples=["Black Doll Winter 2024"]
+    )
+    start_time: datetime | None = Field(examples=["Format must be 'YYYY/MM/DD HH:MM"])
+    end_time: datetime | None = Field(examples=["Format must be 'YYYY/MM/DD HH:MM"])
+    prize: int | None = Field(
+        ge=0, description="Prize for the tournament, must be 0 or positive"
+    )
 
     @field_validator("start_time", mode="before")
     def validate_start_time(cls, value):
+        if value is None:
+            return
         if isinstance(value, str):
             try:
                 value = datetime.strptime(value, r"%Y/%m/%d %H:%M")
@@ -107,6 +114,8 @@ class UpdateTournamentDates(BaseModel):
     def validate_end_time(cls, value, info: FieldValidationInfo):
         # info.data is a dictionary that contains all the previously validated field values
         # of the model up to that point.
+        if value is None:
+            return
         if isinstance(value, str):
             try:
                 value = datetime.strptime(value, r"%Y/%m/%d %H:%M")
@@ -123,7 +132,7 @@ class UpdateTournamentDates(BaseModel):
         return value
 
 
-class UpdateDatesResponse(UpdateTournamentDates):
+class UpdateTournamentResponse(UpdateTournamentRequest):
     tournament_id: UUID
     name: str
     format: str
