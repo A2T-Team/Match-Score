@@ -12,6 +12,11 @@ class InvalidNumberOfPlayers(Exception):
 
     def __init__(self, number_of_players: int, tournament_format: str):
         self.number_of_players = number_of_players
+        super().__init__(
+            f"Knockout tournament has {number_of_players} players. "
+            "The number must be power of two."
+        )
+
         if tournament_format == "knockout":
             super().__init__(
                 f"Knockout tournament has {number_of_players} player(s). "
@@ -29,3 +34,13 @@ class InvalidRequest(Exception):
 
     def __init__(self, error_messag: str):
         super().__init__(error_messag)
+
+        
+class ScoreLimit(Exception):
+    """Custom exception for errors with game points different from the score limit"""
+
+    def __init__(self, max_score: int):
+        self.max_score = max_score
+        super().__init__(
+            f"Only one of the score must be exactly {max_score} points."
+        )
