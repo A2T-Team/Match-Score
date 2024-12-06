@@ -33,7 +33,7 @@ def get_password_hash(password: str):
 
 def authenticate_user(
     username: str, password: str, session: Session = Depends(get_db)
-) -> User:
+) -> User | None:
 
     user = session.query(User).filter(User.username == username).first()
 
@@ -59,7 +59,7 @@ def create_access_token(user: User) -> str:
 
 def get_current_user(
     token: str = Depends(oauth2_scheme), session: Session = Depends(get_db)
-) -> User:
+) -> User | None:
     credential_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",

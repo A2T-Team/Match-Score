@@ -4,8 +4,7 @@ import logging
 import uuid
 import re
 
-from src.common.custom_responses import NotFound, BadRequest, ForbiddenAccess
-from src.core.authentication import get_current_user
+from src.common.custom_responses import NotFound, BadRequest, ForbiddenAccess, Unauthorized
 
 from src.models.request import RequestType
 from src.models.request import Requests
@@ -14,14 +13,15 @@ from src.models.player import Player
 
 from src.schemas.request import CreateRequest, RequestResponse
 
-from src.crud.users import get_id_by_username, is_admin
 from src.crud.players import update_player_with_user
 
 
 logger = logging.getLogger(__name__)
 
 
-def creating_request(db: Session, request: CreateRequest, token: str) -> RequestResponse | NotFound | BadRequest:
+def creating_request(db: Session, request: CreateRequest, current_user: User) -> (RequestResponse |
+                                                                                  NotFound |
+                                                                                  BadRequest):
 
     """
     Create a new request in the database.
@@ -29,37 +29,34 @@ def creating_request(db: Session, request: CreateRequest, token: str) -> Request
     Parameters:
         db (Session): An instance of the SQLAlchemy Session class.
         request (CreateRequest): Contains the details of the request.
-        token (str): The token of the user making the request.
+        current_user (User): The user making the request.
 
     Returns:
         RequestResponse: The details of the created request.
+        Alternatively, a NotFound or BadRequest response.
     """
 
-    user_id = get_id_by_username(db, get_current_user(token))
-
     db_request = Requests(
-        user_id=user_id,
+        user_id=current_user.id,
         request_type=request.request_type,
         request_reason=request.request_reason
     )
 
-    user = db.query(User).filter(User.id == user_id).first()
-
-    if db_request.request_type == RequestType.PROMOTE and user.role == Role.DIRECTOR:
+    if db_request.request_type == RequestType.PROMOTE and current_user.role == Role.DIRECTOR:
         return BadRequest("You are already a director")
 
-    if db_request.request_type == RequestType.DEMOTE and user.role == Role.USER:
+    if db_request.request_type == RequestType.DEMOTE and current_user.role == Role.USER:
         return BadRequest("There is no role to demote to")
 
     if db_request.request_type == RequestType.LINK:
-        potential_player = db.query(Player).filter(Player.user_id == user_id).first()
+        potential_player = db.query(Player).filter(Player.user_id == current_user.id).first()
         if potential_player:
             return BadRequest("You are already linked to a player")
         if not re.match(r"[a-zA-Z]+\s[a-zA-Z]+", request.request_reason):
             return BadRequest("Invalid player name format")
 
     if db_request.request_type == RequestType.UNLINK:
-        player = db.query(Player).filter(Player.user_id == user_id).first()
+        player = db.query(Player).filter(Player.user_id == current_user.id).first()
         if not player:
             return BadRequest("You are not linked to any player")
 
@@ -72,22 +69,27 @@ def creating_request(db: Session, request: CreateRequest, token: str) -> Request
                            request_reason=db_request.request_reason)
 
 
-def view_requests(db: Session, token: str) -> (List[RequestResponse] | NotFound | ForbiddenAccess):
+def view_requests(db: Session, current_user: User) -> (List[RequestResponse] |
+                                                       Unauthorized |
+                                                       NotFound |
+                                                       ForbiddenAccess):
 
     """
     Retrieve all requests from the database.
 
     Parameters:
         db (Session): An instance of the SQLAlchemy Session class.
-        token (str): The token of the user making the request.
+        current_user (User): The user making the request.
 
     Returns:
         List[RequestResponse]: A list of all requests in the database.
+        Alternatively, an Unauthorized, NotFound, or ForbiddenAccess response.
     """
 
-    user_id = get_id_by_username(db, get_current_user(token))
+    if current_user is None:
+        return Unauthorized()
 
-    if not is_admin(db, user_id):
+    if not current_user.role == Role.ADMIN:
         return ForbiddenAccess()
 
     if not db.query(Requests).all():
@@ -99,7 +101,10 @@ def view_requests(db: Session, token: str) -> (List[RequestResponse] | NotFound 
                             user_id=request.user_id, request_reason=request.request_reason) for request in requests]
 
 
-def open_request(db: Session, request_id: uuid.UUID, token: str) -> (RequestResponse | NotFound | ForbiddenAccess):
+def open_request(db: Session, request_id: uuid.UUID, current_user: User) -> (RequestResponse |
+                                                                             Unauthorized |
+                                                                             NotFound |
+                                                                             ForbiddenAccess):
 
     """
     Retrieve a request from the database by its ID.
@@ -107,15 +112,17 @@ def open_request(db: Session, request_id: uuid.UUID, token: str) -> (RequestResp
     Parameters:
         db (Session): An instance of the SQLAlchemy Session class.
         request_id (uuid.UUID): The ID of the request to retrieve.
-        token (str): The token of the user making the request.
+        current_user (User): The user making the request.
 
     Returns:
         RequestResponse: The details of the requested request.
+        Alternatively, an Unauthorized, NotFound, or ForbiddenAccess response.
     """
 
-    user_id = get_id_by_username(db, get_current_user(token))
+    if current_user is None:
+        return Unauthorized()
 
-    if not is_admin(db, user_id):
+    if not current_user.role == Role.ADMIN:
         return ForbiddenAccess()
 
     request = db.query(Requests).filter(Requests.id == request_id).first()
@@ -127,7 +134,11 @@ def open_request(db: Session, request_id: uuid.UUID, token: str) -> (RequestResp
                            user_id=request.user_id, request_reason=request.request_reason)
 
 
-def accept_request(db: Session, request_id: uuid.UUID, token: str) -> (str | NotFound | BadRequest | ForbiddenAccess):
+def accept_request(db: Session, request_id: uuid.UUID, current_user: User) -> (str |
+                                                                               Unauthorized |
+                                                                               NotFound |
+                                                                               BadRequest |
+                                                                               ForbiddenAccess):
 
     """
     Accept a request in the database.
@@ -135,15 +146,17 @@ def accept_request(db: Session, request_id: uuid.UUID, token: str) -> (str | Not
     Parameters:
         db (Session): An instance of the SQLAlchemy Session class.
         request_id (uuid.UUID): The ID of the request to accept.
-        token (str): The token of the user making the request.
+        current_user (User): The user making the request.
 
     Returns:
         str: A message indicating the request was successfully accepted.
+        Alternatively, an Unauthorized, NotFound, BadRequest, or ForbiddenAccess response.
     """
 
-    user_id = get_id_by_username(db, get_current_user(token))
+    if current_user is None:
+        return Unauthorized()
 
-    if not is_admin(db, user_id):
+    if not current_user.role == Role.ADMIN:
         return ForbiddenAccess()
 
     request = db.query(Requests).filter(Requests.id == request_id).first()
@@ -184,7 +197,10 @@ def accept_request(db: Session, request_id: uuid.UUID, token: str) -> (str | Not
     return "Request accepted"
 
 
-def reject_request(db: Session, request_id: uuid.UUID, token: str) -> (str | NotFound | ForbiddenAccess):
+def reject_request(db: Session, request_id: uuid.UUID, current_user: User) -> (str |
+                                                                               Unauthorized |
+                                                                               NotFound |
+                                                                               ForbiddenAccess):
 
     """
     Reject a request in the database.
@@ -192,15 +208,17 @@ def reject_request(db: Session, request_id: uuid.UUID, token: str) -> (str | Not
     Parameters:
         db (Session): An instance of the SQLAlchemy Session class.
         request_id (uuid.UUID): The ID of the request to reject.
-        token (str): The token of the user making the request.
+        current_user (User): The user making the request.
 
     Returns:
         str: A message indicating the request was successfully rejected.
+        Alternatively, an Unauthorized, NotFound, or ForbiddenAccess response.
     """
 
-    user_id = get_id_by_username(db, get_current_user(token))
+    if current_user is None:
+        return Unauthorized()
 
-    if not is_admin(db, user_id):
+    if not current_user.role == Role.ADMIN:
         return ForbiddenAccess()
 
     request = db.query(Requests).filter(Requests.id == request_id).first()

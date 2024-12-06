@@ -16,6 +16,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), ses
 
     Parameters:
         form_data (OAuth2PasswordRequestForm): The form data containing the username and password.
+        session (Session): The SQLAlchemy session object.
 
     Returns:
         Token: An access token if authentication is successful, or an HTTPException if authentication fails.
