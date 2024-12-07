@@ -145,4 +145,3 @@ def update_player_with_user(db: Session, player_id: uuid.UUID, user_id: uuid.UUI
     db.commit()
     db.refresh(player)
     return player
-
