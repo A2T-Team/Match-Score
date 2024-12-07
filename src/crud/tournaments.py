@@ -540,8 +540,7 @@ def _create_league_matches(
     players_ids = [participant.id for participant in tournament.participants]
 
     random.shuffle(players_ids)
-    player_pairs = get_combinations(players_ids)
-    all_staged_matches = split_in_stages(player_pairs, len(players_ids))
+    all_staged_matches = split_in_stages(players_ids)
     all_matches = []
     for stage, staged_matches in enumerate(all_staged_matches):
         for serial_number, pair in enumerate(staged_matches):
@@ -559,7 +558,55 @@ def _create_league_matches(
     return all_matches
 
 
-def split_in_stages(
+def split_in_stages(players_ids: list[UUID]) -> list[list[tuple[str, str]]]:
+    """
+    Split player pairs into stages.
+    https://medium.com/moove-it/algorithm-for-the-generation-of-a-soccer-or-any-sport-or-event-fixture-c9798732121d
+
+    The function organizes player pairs into a specified number of stages, ensuring that:
+    - Each player participates in one match per stage.
+    - All players play against every other player exactly once across all stages.
+
+    Returns:
+        list[list[tuple[str, str]]]: A list where each element represents a stage, 
+        containing the matches (pairs of players) for that stage.
+    """
+    num_players = len(players_ids)
+    num_stages = num_players - 1
+    num_matches_per_stage = num_players // 2
+    all_matches = []
+    last_player = players_ids[-1]
+    for stage in range(num_stages):
+        stage_matches = []
+        stage_players = []
+        if stage == 0:
+            for i in range(num_matches_per_stage):
+                pair = (players_ids[i], players_ids[-1-i])
+                stage_matches.append(pair)
+                stage_players.extend(pair)
+        else:
+            previous_stage_last_player = previous_stage_players.pop()
+            previous_stage_players.remove(last_player)
+            if stage // 2 == 0:
+                pair = (previous_stage_last_player, last_player)
+            else:
+                pair = (last_player, previous_stage_last_player)
+            stage_matches.append(pair)
+            stage_players.extend(pair)
+            while previous_stage_players:
+                player_b = previous_stage_players.pop()
+                player_a = previous_stage_players.pop()
+                pair = (player_a, player_b)
+                stage_matches.append(pair)
+                stage_players.extend(pair)
+
+        previous_stage_players = stage_players
+        all_matches.append(stage_matches)
+
+    return all_matches
+
+
+def split_in_stages_old(
     player_pairs: list[tuple[str, str]], num_players: int
 ) -> list[list[tuple[str, str]]]:
     """

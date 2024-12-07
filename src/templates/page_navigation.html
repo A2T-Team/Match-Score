@@ -1,0 +1,49 @@
+<nav aria-label="Page Navigation">
+    <ul class="pagination">
+        {% if not tournaments.has_prev %}
+        <li class="page-item disabled">
+            <a class="page-link">&lt;&lt;</a>
+        </li>
+        <li class="page-item disabled">
+            <a class="page-link">&lt;</a>
+        </li>
+        {% else %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for(request.url_rule.endpoint, page=1, **kwargs) }}">&lt;&lt;</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for(request.url_rule.endpoint, page=tournaments.prev_num, **kwargs) }}">&lt;</a>
+        </li>
+        {% endif %}
+        {% for page_num in tournaments.iter_pages(left_edge=2, left_current=3, right_current=4, right_edge=2) %}
+        {% if page_num %}
+        {% if page_num == tournaments.page %}
+        <li class="page-item active" aria-current="page">
+            <a class="page-link">{{ page_num }}</a>
+        </li>
+        {% else %}
+        <li class="page-item"><a class="page-link" href="{{ url_for(request.url_rule.endpoint, page=page_num, **kwargs) }}">{{ page_num
+                }}</a>
+        </li>
+        {% endif %}
+        {% else %}
+        <li class="page-item disabled" aria-current="page">...</li>
+        {% endif %}
+        {% endfor %}
+        {% if not tournaments.has_next %}
+        <li class="page-item disabled">
+            <a class="page-link">&gt;</a>
+        </li>
+        <li class="page-item disabled">
+            <a class="page-link">&gt;&gt;</a>
+        </li>
+        {% else %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for(request.url_rule.endpoint, page=tournaments.next_num, **kwargs) }}">&gt;</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for(request.url_rule.endpoint, page=tournaments.pages, **kwargs) }}">&gt;&gt;</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
