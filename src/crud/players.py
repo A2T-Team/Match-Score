@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
-import uuid
+from uuid import UUID
 from fastapi import HTTPException, status
 from src.models.player import Player
 from src.models.user import User
 from src.models.tournament import TournamentParticipants
-from src.models.match import Match
+#from src.models.match import Match
 
 from src.schemas.player import CreatePlayerRequest #PlayerUpdate
 
@@ -45,7 +45,7 @@ def create_player(db: Session, request: CreatePlayerRequest):
     return new_player
 
 
-def read_player_by_id(db: Session, player_id: uuid.UUID):
+def read_player_by_id(db: Session, player_id: UUID):
     player = db.query(Player).filter_by(id=player_id).first()
     if not player:
         raise HTTPException(
@@ -53,8 +53,15 @@ def read_player_by_id(db: Session, player_id: uuid.UUID):
         )
     return player
 
+def read_current_user_player_profile(db:Session, user: User):
+    player = db.query(Player).filter_by(user_id = user.id).first()
+    if not player:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User has no Player profile"
+        )
+    return player
 
-def read_all_players(db: Session, tournament_id: uuid.UUID | None = None):
+def read_all_players(db: Session, tournament_id: UUID | None = None):
     query = db.query(Player)
     
     if tournament_id:
@@ -116,7 +123,7 @@ def read_all_players(db: Session, tournament_id: uuid.UUID | None = None):
 #     return player
 
 
-def delete_player(db: Session, player_id: uuid.UUID):
+def delete_player(db: Session, player_id: UUID):
     player = db.query(Player).filter_by(id=player_id).first()
     if not player:
         raise HTTPException(
@@ -126,7 +133,7 @@ def delete_player(db: Session, player_id: uuid.UUID):
     db.commit()
     return True
 
-def update_player_with_user(db: Session, player_id: uuid.UUID, user_id: uuid.UUID):
+def update_player_with_user(db: Session, player_id: UUID, user_id: UUID):
     player = db.query(Player).filter_by(id=player_id).first()
     if not player:
         raise HTTPException(

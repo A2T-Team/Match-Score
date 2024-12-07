@@ -12,6 +12,7 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy.orm import relationship, validates
+from src.models.match import Match
 
 
 class Player(Base):

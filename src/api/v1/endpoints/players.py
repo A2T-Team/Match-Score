@@ -4,6 +4,8 @@ from src.api.deps import get_db
 from src.schemas.player import CreatePlayerRequest, PlayerResponse #PlayerUpdate
 from src.crud import players
 import uuid
+from src.core.auth import get_current_user
+from src.models.user import User
 
 router = APIRouter()
 
@@ -41,5 +43,6 @@ def connect_user_to_player(player_id: uuid.UUID, user_id: uuid.UUID, db: Session
     return players.update_player_with_user(db, player_id, user_id)
     #return PlayerResponse.model_validate(player)
 
-# 39d3b99f-027e-4f49-b557-249a887121a6
-# 95000a2e-a12f-43a0-acb5-5d78ea14f484
+@router.get("/my_profile", response_model=PlayerResponse)
+def get_user_player_profile(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return players.read_current_user_player_profile(db, current_user)
