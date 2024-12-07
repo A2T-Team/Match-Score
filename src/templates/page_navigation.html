@@ -1,6 +1,6 @@
 <nav aria-label="Page Navigation">
     <ul class="pagination">
-        {% if not investments.has_prev %}
+        {% if not tournaments.has_prev %}
         <li class="page-item disabled">
             <a class="page-link">&lt;&lt;</a>
         </li>
@@ -12,12 +12,12 @@
             <a class="page-link" href="{{ url_for(request.url_rule.endpoint, page=1, **kwargs) }}">&lt;&lt;</a>
         </li>
         <li class="page-item">
-            <a class="page-link" href="{{ url_for(request.url_rule.endpoint, page=investments.prev_num, **kwargs) }}">&lt;</a>
+            <a class="page-link" href="{{ url_for(request.url_rule.endpoint, page=tournaments.prev_num, **kwargs) }}">&lt;</a>
         </li>
         {% endif %}
-        {% for page_num in investments.iter_pages(left_edge=2, left_current=3, right_current=4, right_edge=2) %}
+        {% for page_num in tournaments.iter_pages(left_edge=2, left_current=3, right_current=4, right_edge=2) %}
         {% if page_num %}
-        {% if page_num == investments.page %}
+        {% if page_num == tournaments.page %}
         <li class="page-item active" aria-current="page">
             <a class="page-link">{{ page_num }}</a>
         </li>
@@ -30,7 +30,7 @@
         <li class="page-item disabled" aria-current="page">...</li>
         {% endif %}
         {% endfor %}
-        {% if not investments.has_next %}
+        {% if not tournaments.has_next %}
         <li class="page-item disabled">
             <a class="page-link">&gt;</a>
         </li>
@@ -39,10 +39,10 @@
         </li>
         {% else %}
         <li class="page-item">
-            <a class="page-link" href="{{ url_for(request.url_rule.endpoint, page=investments.next_num, **kwargs) }}">&gt;</a>
+            <a class="page-link" href="{{ url_for(request.url_rule.endpoint, page=tournaments.next_num, **kwargs) }}">&gt;</a>
         </li>
         <li class="page-item">
-            <a class="page-link" href="{{ url_for(request.url_rule.endpoint, page=investments.pages, **kwargs) }}">&gt;&gt;</a>
+            <a class="page-link" href="{{ url_for(request.url_rule.endpoint, page=tournaments.pages, **kwargs) }}">&gt;&gt;</a>
         </li>
         {% endif %}
     </ul>

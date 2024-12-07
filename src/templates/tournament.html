@@ -1,0 +1,66 @@
+{% extends 'layout.html' %}
+{% block content %}
+<container class="container mt-5 pt-4">
+    <div class="row">
+        <!-- Tournament Info Section -->
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    {{ tournament.name }}
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <strong>Start Time:</strong> <span id="start-time">{{ tournament.start_time }}</span><br>
+                        <strong>End Time:</strong> <span id="end-time">{{ tournament.end_time }}</span><br>
+                        <strong>Format:</strong> <span id="end-time">{{ tournament.format.type.capitalize() }}</span><br>
+                        <strong>Match Format:</strong> <span id="end-time">{{ tournament.match_format.type.capitalize() }}</span><br>
+                        <strong>Prize:</strong> <span id="end-time">{{ tournament.prize }}</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Players Section -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    Players
+                </div>
+                <ul class="list-group list-group-flush" id="players-list">
+                    {% for player in tournament.participants %}
+                        <li class="list-group-item">{{ player.first_name }} {{ player.last_name }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Matches Section -->
+        {% for stage in tournament.stage %}
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    {{ tournament.stage }}
+                </div>
+                <ul class="list-group list-group-flush" id="matches-list">
+                    {% for match in tournament.matches %}
+                        <li class="list-group-item">{{ match.player_a.first_name }} vs {{ match.player_b.first_name }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</container>
+{% endblock content %}<div class="col-md-6">
+    <div class="card mb-4">
+        <div class="card-header">
+            Matches
+        </div>
+        <ul class="list-group list-group-flush" id="matches-list">
+            {% for match in tournament.matches %}
+                <li class="list-group-item">{{ match.player_a.first_name }} vs {{ match.player_b.first_name }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
