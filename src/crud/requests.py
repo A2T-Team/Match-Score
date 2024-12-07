@@ -1,13 +1,12 @@
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 import logging
 import uuid
 import re
 
 from src.common.custom_responses import NotFound, BadRequest, ForbiddenAccess, Unauthorized
 
-from src.models.request import RequestType
-from src.models.request import Requests
+from src.models.request import RequestType, Requests, RequestStatus
 from src.models.user import User, Role
 from src.models.player import Player
 
@@ -20,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def creating_request(db: Session, request: CreateRequest, current_user: User) -> (RequestResponse |
+                                                                                  Unauthorized |
                                                                                   NotFound |
                                                                                   BadRequest):
 
@@ -36,26 +36,29 @@ def creating_request(db: Session, request: CreateRequest, current_user: User) ->
         Alternatively, a NotFound or BadRequest response.
     """
 
+    if current_user is None:
+        return Unauthorized()
+
     db_request = Requests(
         user_id=current_user.id,
-        request_type=request.request_type,
-        request_reason=request.request_reason
+        type=request.type,
+        reason=request.reason
     )
 
-    if db_request.request_type == RequestType.PROMOTE and current_user.role == Role.DIRECTOR:
+    if db_request.type == RequestType.PROMOTE and current_user.role == Role.DIRECTOR:
         return BadRequest("You are already a director")
 
-    if db_request.request_type == RequestType.DEMOTE and current_user.role == Role.USER:
+    if db_request.type == RequestType.DEMOTE and current_user.role == Role.USER:
         return BadRequest("There is no role to demote to")
 
-    if db_request.request_type == RequestType.LINK:
+    if db_request.type == RequestType.LINK:
         potential_player = db.query(Player).filter(Player.user_id == current_user.id).first()
         if potential_player:
             return BadRequest("You are already linked to a player")
-        if not re.match(r"[a-zA-Z]+\s[a-zA-Z]+", request.request_reason):
+        if not re.match(r"[a-zA-Z]+\s[a-zA-Z]+", request.reason):
             return BadRequest("Invalid player name format")
 
-    if db_request.request_type == RequestType.UNLINK:
+    if db_request.type == RequestType.UNLINK:
         player = db.query(Player).filter(Player.user_id == current_user.id).first()
         if not player:
             return BadRequest("You are not linked to any player")
@@ -64,15 +67,16 @@ def creating_request(db: Session, request: CreateRequest, current_user: User) ->
     db.commit()
     db.refresh(db_request)
 
-    return RequestResponse(request_id=db_request.id, created_at=db_request.created_at,
-                           request_type=db_request.request_type, user_id=db_request.user_id,
-                           request_reason=db_request.request_reason)
+    return RequestResponse(id=db_request.id, created_at=db_request.created_at,
+                           type=db_request.type, user_id=db_request.user_id,
+                           reason=db_request.reason, status=db_request.status)
 
 
-def view_requests(db: Session, current_user: User) -> (List[RequestResponse] |
-                                                       Unauthorized |
-                                                       NotFound |
-                                                       ForbiddenAccess):
+def view_requests(db: Session, current_user: User, search: Optional[str]) -> (List[RequestResponse] |
+                                                                              Unauthorized |
+                                                                              NotFound |
+                                                                              BadRequest |
+                                                                              ForbiddenAccess):
 
     """
     Retrieve all requests from the database.
@@ -80,6 +84,7 @@ def view_requests(db: Session, current_user: User) -> (List[RequestResponse] |
     Parameters:
         db (Session): An instance of the SQLAlchemy Session class.
         current_user (User): The user making the request.
+        search (Optional[str]): The status of the requests to retrieve.
 
     Returns:
         List[RequestResponse]: A list of all requests in the database.
@@ -95,10 +100,17 @@ def view_requests(db: Session, current_user: User) -> (List[RequestResponse] |
     if not db.query(Requests).all():
         return NotFound(key="Requests", key_value="")
 
-    requests = db.query(Requests).all()
+    if search:
+        requests = db.query(Requests).filter(Requests.status == search).all()
+        if not requests:
+            return NotFound(key="Requests", key_value=search)
 
-    return [RequestResponse(request_id=request.id, created_at=request.created_at, request_type=request.request_type,
-                            user_id=request.user_id, request_reason=request.request_reason) for request in requests]
+    else:
+        requests = db.query(Requests).all()
+
+    return [RequestResponse(id=request.id, created_at=request.created_at, type=request.type,
+                            user_id=request.user_id, reason=request.reason, status=request.status)
+            for request in requests]
 
 
 def open_request(db: Session, request_id: uuid.UUID, current_user: User) -> (RequestResponse |
@@ -130,8 +142,8 @@ def open_request(db: Session, request_id: uuid.UUID, current_user: User) -> (Req
     if not request:
         return NotFound(key="Request ID", key_value=str(request_id))
 
-    return RequestResponse(request_id=request.id, created_at=request.created_at, request_type=request.request_type,
-                           user_id=request.user_id, request_reason=request.request_reason)
+    return RequestResponse(id=request.id, created_at=request.created_at, type=request.type,
+                           user_id=request.user_id, reason=request.reason, status=request.status)
 
 
 def accept_request(db: Session, request_id: uuid.UUID, current_user: User) -> (str |
@@ -166,35 +178,41 @@ def accept_request(db: Session, request_id: uuid.UUID, current_user: User) -> (s
 
     user = db.query(User).filter(User.id == request.user_id).first()
 
-    if request.request_type == RequestType.PROMOTE:
+    if request.type == RequestType.PROMOTE:
         user.role = Role.DIRECTOR
 
-    if request.request_type == RequestType.DEMOTE:
+    if request.type == RequestType.DEMOTE:
         user.role = Role.USER
 
-    if request.request_type == RequestType.DELETE:
+    if request.type == RequestType.DELETE:
         db.delete(user)
 
-    if request.request_type == RequestType.LINK:
+    if request.type == RequestType.LINK:
 
-        firstname, lastname = request.request_reason.split(" ")
+        firstname, lastname = request.reason.split(" ")
         player = db.query(Player).filter(Player.first_name == firstname, Player.last_name == lastname).first()
 
         if not player:
             db.delete(request)
             db.commit()
-            return NotFound(key="Player", key_value=request.request_reason)
+            return NotFound(key="Player", key_value=request.reason)
 
         update_player_with_user(db, player.id, request.user_id)
 
-    if request.request_type == RequestType.UNLINK:
+    if request.type == RequestType.UNLINK:
         player = db.query(Player).filter(Player.user_id==request.user_id).first()
         player.user_id = None
 
-    db.delete(request)
+    request.status = RequestStatus.ACCEPTED
     db.commit()
+    db.refresh(request)
 
-    return "Request accepted"
+    return f"Request accepted:\n{RequestResponse(id=request.id,
+                                                 created_at=request.created_at,
+                                                 type=request.type,
+                                                 user_id=request.user_id,
+                                                 reason=request.reason,
+                                                 status=request.status)}"
 
 
 def reject_request(db: Session, request_id: uuid.UUID, current_user: User) -> (str |
@@ -226,7 +244,13 @@ def reject_request(db: Session, request_id: uuid.UUID, current_user: User) -> (s
     if not request:
         return NotFound(key="Request ID", key_value=str(request_id))
 
-    db.delete(request)
+    request.status = RequestStatus.REJECTED
     db.commit()
+    db.refresh(request)
 
-    return "Request rejected"
+    return f"Request rejected:\n{RequestResponse(id=request.id,
+                                                 created_at=request.created_at,
+                                                 type=request.type,
+                                                 user_id=request.user_id,
+                                                 reason=request.reason,
+                                                 status=request.status)}"
