@@ -25,6 +25,17 @@ class RequestType(PyEnum):
     UNLINK = "Unlink Request"
 
 
+class RequestStatus(PyEnum):
+
+    """
+    Enum representing the status of a request.
+    """
+
+    PENDING = "Pending"
+    ACCEPTED = "Accepted"
+    REJECTED = "Rejected"
+
+
 class Requests(Base):
 
     """
@@ -35,6 +46,8 @@ class Requests(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    request_type = Column(Enum(RequestType, name="request_enum"), nullable=False)
-    request_reason = Column(Text, nullable=False)
+    type = Column(Enum(RequestType, name="request_enum"), nullable=False)
+    reason = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.now(), nullable=False)
+    status = Column(Enum(RequestStatus, name="request_status_enum"),
+                    default=RequestStatus.PENDING, nullable=False)
