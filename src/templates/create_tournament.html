@@ -1,0 +1,48 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="content-section">
+    <form method="POST" action="/tournament/submit_tournament">
+        <div class="form-group mb-3">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" class="form-control" placeholder="Enter name" required>
+        </div>
+        <div class="mb-3">
+            <label for="format" class="form-label">Tournament Format</label>
+            <select class="form-select" id="format" name="format" required>
+                <option value="" selected disabled>Choose Format</option>
+                <option value="league">League</option>
+                <option value="knockout">Knockout</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="match_format" class="form-label">Match Format</label>
+            <select class="form-select" id="match_format" name="match_format" required>
+                <option value="" selected disabled>Choose Format</option>
+                <option value="time">Time</option>
+                <option value="score">Score</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="start_time" class="form-label">Start Time</label>
+            <input type="datetime-local" class="form-control" id="start_time" name="start_time" required>
+        </div>
+        <div class="mb-3">
+            <label for="end_time" class="form-label">End Time</label>
+            <input type="datetime-local" class="form-control" id="end_time" name="end_time" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="prize">Prize</label>
+            <input type="number" id="prize" name="prize" class="form-control" placeholder="Enter prize" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="win_points">Win Points</label>
+            <input type="number" id="win_points" name="win_points" class="form-control" placeholder="Enter win points">
+        </div>
+        <div class="form-group mb-3">
+            <label for="draw_points">Draw Points</label>
+            <input type="number" id="draw_points" name="draw_points" class="form-control" placeholder="Enter draw points">
+        </div>
+          <button type="submit" class="btn btn-dark my-2">Create Tournament</button>
+    </form>
+</div>
+{% endblock content %}

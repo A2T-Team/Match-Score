@@ -1,0 +1,46 @@
+<div class="card my-3">
+    <div class="card-header bg-dark text-white text-center p-2">   
+            {{ player.first_name }} {{ player.last_name }}
+    </div>
+    <div class="card-body d-flex justify-content-center align-items-center flex-column">
+        <p class="card-text"><b>Wins: </b>{{ player.wins }}</p>
+        <p class="card-text"><b>Losses: </b>{{ player.losses }}</p>
+        <p class="card-text"><b>Draws: </b>{{ player.draws }}</p>
+
+        <div class="d-inline">
+            <a href="#" class="btn btn-secondary">See Profile</a>
+
+            {% if user and user.role.value in ("admin", "director") %}
+                <a href="#" class="btn btn-danger" data-bs-toggle="modal"
+                    data-bs-target="#deleteModal{{ player.id }}">
+                    <i class="bi bi-trash"></i>
+                    Remove
+                </a>
+            {% endif %}
+        </div>
+        <!-- Confirm deletion -->
+        <div class="modal fade" id="deleteModal{{ player.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Remove Player {{ player.first_name }} {{ player.last_name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Removing a participant from tournament is irreversible</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-dark"
+                            data-bs-dismiss="modal">Close</button>
+                        <a class="btn btn-outline-danger"
+                            href="{{ url_for('delete_player_html', tournament_id=tournament.id, player_id=player.id) }}">
+                                <i class="bi bi-trash"></i>
+                                Remove
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
