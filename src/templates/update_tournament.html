@@ -1,0 +1,24 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="content-section">
+    <form method="POST" action="/tournament/{{tournament.id}}/submit_update">
+        <div class="form-group mb-3">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" class="form-control" placeholder="Enter name" value="{{ tournament.name }}">
+        </div>
+        <div class="mb-3">
+            <label for="start_time" class="form-label">Start Time</label>
+            <input type="datetime-local" class="form-control" id="start_time" name="start_time" value="{{ tournament.start_time }}">
+        </div>
+        <div class="mb-3">
+            <label for="end_time" class="form-label">End Time</label>
+            <input type="datetime-local" class="form-control" id="end_time" name="end_time" value="{{ tournament.end_time }}">
+        </div>
+        <div class="form-group mb-3">
+            <label for="prize">Prize</label>
+            <input type="number" id="prize" name="prize" class="form-control" placeholder="Enter prize" value="{{ tournament.prize }}">
+        </div>
+          <button type="submit" class="btn btn-dark my-2">Update Tournament</button>
+    </form>
+</div>
+{% endblock content %}

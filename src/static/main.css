@@ -44,3 +44,30 @@ h6 {
     background-color: #333;
     border: solid 1px #333;
 }
+
+.match-card {
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    margin: 10px auto;
+    background-color: #f8f9fa;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.connector {
+    height: 30px;
+    width: 2px;
+    background-color: #ccc;
+    margin: auto;
+}
+.horizontal-connector {
+    height: 2px;
+    width: 50%;
+    background-color: #ccc;
+    margin: auto;
+}
+.tree-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

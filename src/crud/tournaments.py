@@ -316,6 +316,42 @@ def delete_players(
     return result
 
 
+def remove_player(
+    db_session: Session, tournament_id: UUID, player_id: UUID
+) -> None:
+    """
+    Remove participant from a tournament.
+
+    The function removes a single participant from a specified tournament.
+    - It checks if the participant is registered in the given tournament.
+    - If found, the participant's association with the tournament is removed.
+    - If not found, the function raises NotFound exception
+
+    Args:
+        db_session (Session): The database session used for querying and committing changes.
+        tournament_id (UUID): The unique identifier of the tournament from which participants will be removed.
+        player_id (UUID):  The unique identifier of the participant to be removed.
+
+    Returns:
+        None
+    """
+    tournament_participant = (
+        db_session.query(TournamentParticipants)
+        .filter(
+            and_(
+                TournamentParticipants.player_id == player_id,
+                TournamentParticipants.tournament_id == tournament_id,
+            )
+        )
+        .first()
+    )
+    if tournament_participant is None:
+        raise NotFound(key="participant", key_value=player_id)
+
+    db_session.delete(tournament_participant)
+    db_session.commit()
+
+
 def update_tournament(
     tournament_id: UUID, data: UpdateTournamentRequest, db_session: Session
 ) -> Tournament:

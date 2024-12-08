@@ -59,7 +59,7 @@ def create_tournament(
         return ForbiddenAccess()
 
     try:
-        tournament = tournaments.create(
+        new_tournament = tournaments.create(
             tournament=tournament, current_user=current_user, db_session=db_session
         )
 
@@ -69,7 +69,7 @@ def create_tournament(
     except IntegrityError as e:
         if isinstance(e.orig, UniqueViolation):
             if "tournaments_name_key" in str(e.orig):
-                return AlreadyExists(f"Tournament with name '{tournament.name}'")
+                return AlreadyExists(f"Tournament with name '{new_tournament.name}'")
             else:
                 return InternalServerError(
                     f"An unexpected integrity error occurred: {str(e)}"
@@ -77,19 +77,19 @@ def create_tournament(
         return InternalServerError(f"Database error: {str(e)}")
 
     response = CreateTournamentResponse(
-        tournament_id=tournament.id,
-        name=tournament.name,
-        format=tournament.format.type,
-        match_format=tournament.match_format.type,
-        start_time=tournament.start_time,
-        end_time=tournament.end_time,
-        prize=tournament.prize,
-        win_points=tournament.win_points,
-        draw_points=tournament.draw_points,
-        author_id=tournament.author_id,
-        total_participants=len(tournament.participants),
+        tournament_id=new_tournament.id,
+        name=new_tournament.name,
+        format=new_tournament.format.type,
+        match_format=new_tournament.match_format.type,
+        start_time=new_tournament.start_time,
+        end_time=new_tournament.end_time,
+        prize=new_tournament.prize,
+        win_points=new_tournament.win_points,
+        draw_points=new_tournament.draw_points,
+        author_id=new_tournament.author_id,
+        total_participants=len(new_tournament.participants),
         participants=[],
-        total_matches=len(tournament.matches),
+        total_matches=len(new_tournament.matches),
         matches=[],
     )
     return response
@@ -309,13 +309,3 @@ def delete_tournament(
     
     tournaments.delete_tournament(db_session, tournament_id)
     return OK(content="Tournament deleted")
-
-
-@router.put("/{tournament_id}/matches/{match_id}")
-def update_match(
-    tournament_id: UUID,
-    players: list[str],
-    db_session: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    pass
