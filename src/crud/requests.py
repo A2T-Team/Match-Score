@@ -206,13 +206,13 @@ def accept_request(db: Session, request_id: uuid.UUID, current_user: User) -> (s
     request.status = RequestStatus.ACCEPTED
     db.commit()
     db.refresh(request)
-
-    return f"Request accepted:\n{RequestResponse(id=request.id,
+    request_response = RequestResponse(id=request.id,
                                                  created_at=request.created_at,
                                                  type=request.type,
                                                  user_id=request.user_id,
                                                  reason=request.reason,
-                                                 status=request.status)}"
+                                                 status=request.status)
+    return f"Request accepted:\n{request_response}"
 
 
 def reject_request(db: Session, request_id: uuid.UUID, current_user: User) -> (str |
@@ -248,9 +248,11 @@ def reject_request(db: Session, request_id: uuid.UUID, current_user: User) -> (s
     db.commit()
     db.refresh(request)
 
-    return f"Request rejected:\n{RequestResponse(id=request.id,
+    request_response = RequestResponse(id=request.id,
                                                  created_at=request.created_at,
                                                  type=request.type,
                                                  user_id=request.user_id,
                                                  reason=request.reason,
-                                                 status=request.status)}"
+                                                 status=request.status)
+
+    return f"Request rejected:\n{request_response}"
