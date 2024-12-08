@@ -37,6 +37,6 @@ class Player(Base):
     user_id = Column(UUID, ForeignKey("users.id"), nullable=True)
 
     # user = relationship("User", back_populates="user_as_player")
-    matches_as_a = relationship("Match", foreign_keys="Match.player_a_id", back_populates="player_a")
-    matches_as_b = relationship("Match", foreign_keys="Match.player_b_id", back_populates="player_b")
+    matches_as_a = relationship("Match", foreign_keys="Match.player_a_id", back_populates="player_a", lazy='dynamic')
+    matches_as_b = relationship("Match", foreign_keys="Match.player_b_id", back_populates="player_b", lazy='dynamic')
     tournament = relationship("Tournament", secondary="tournament_participants", back_populates="participants")

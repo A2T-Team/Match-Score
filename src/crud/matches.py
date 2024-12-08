@@ -118,7 +118,8 @@ def update_match_score(match_id: uuid, updates: MatchResult, db: Session):
     match = db.query(Match).filter(Match.id == match_id).first()
     if not match:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
-    
+    if (updates.score_a > updates.score_b and (updates.result_code == 'player 2' or updates.result_code == 'draw')) or (updates.score_a < updates.score_b and (updates.result_code == 'player 1' or updates.result_code == 'draw')) or (updates.score_a == updates.score_b and (updates.result_code == 'player 1' or updates.result_code == 'player 2')):
+        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail="Invalid result")
     if match.format_id == 1:
         # if (
         #     updates.score_a > match.end_condition or updates.score_b > match.end_condition or
@@ -170,7 +171,7 @@ def delete_match(db: Session, match_id: uuid.UUID) -> bool:
 def update_player_stats_after_match(db: Session, match_id: uuid.UUID):
     match = db.query(Match).filter_by(id=match_id).first()
 
-    if not match:
+    if  match is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Match not found"
         )
