@@ -116,7 +116,3 @@ class MatchCRUD_Should(unittest.TestCase):
         # Check the status code and message of the exception
         self.assertEqual(context.exception.status_code, 404)
         self.assertEqual(context.exception.detail, "Match not found")
-
-
-if __name__ == '__main__':
-    unittest.main()
