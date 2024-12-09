@@ -8,8 +8,10 @@ from src.common.custom_responses import AlreadyExists, NotFound, Unauthorized, B
 from src.core.auth import create_access_token
 from src.core.authentication import (get_password_hash, get_current_user, verify_password)
 
-from src.models.user import User
-from src.models.user import Role
+from src.models.user import User, Role
+from src.models.request import Requests
+from src.models.player import Player
+from src.models.tournament import Tournament
 
 from src.schemas.user import (CreateUserRequest, LoginRequest, UserResponse, UpdateEmailRequest, UpdateUserRequest)
 
@@ -236,7 +238,7 @@ def get_by_email(db: Session, email: str, current_user: User) -> (UserResponse |
     return UserResponse(username=user.username, email=user.email, role=user.role)
 
 
-def get_all_users(db: Session, current_user: User) -> (List[UserResponse] | NotFound | Unauthorized | ForbiddenAccess):
+def get_all_users(db: Session, current_user: User, limit: int) -> (List[UserResponse] | NotFound | Unauthorized | ForbiddenAccess):
 
     """
     Retrieve all users from the database.
@@ -244,6 +246,7 @@ def get_all_users(db: Session, current_user: User) -> (List[UserResponse] | NotF
     Parameters:
         db (Session): An instance of the SQLAlchemy Session class.
         current_user (User): The user making the request.
+        limit (int): The maximum number of users to return.
     Returns:
         List[User]: A list of all users in the database.
         Alternatively, an error message if no users exist or the user is not authorized.
@@ -258,7 +261,7 @@ def get_all_users(db: Session, current_user: User) -> (List[UserResponse] | NotF
     if not db.query(User).all():
         return NotFound(key="Users", key_value="")
 
-    users = db.query(User).all()
+    users = db.query(User).limit(limit).all()
 
     return [UserResponse(username=user.username, email=user.email, role=user.role) for user in users]
 
@@ -368,6 +371,24 @@ def delete_user(db: Session, username: str, current_user: User) -> (str | NotFou
     user = db.query(User).filter(User.username == username).first()
     if not user:
         return NotFound(key="Username", key_value=username)
+
+    requests = db.query(Requests).filter(Requests.user_id == user.id).all()
+
+    if requests:
+        for request in requests:
+            db.delete(request)
+
+    players = db.query(Player).filter(Player.user_id == user.id).all()
+
+    if players:
+        for player in players:
+            player.user_id = None
+
+    tournaments = db.query(Tournament).filter(Tournament.author_id == user.id).all()
+
+    if tournaments:
+        for tournament in tournaments:
+            tournament.author_id = current_user.id
 
     db.delete(user)
     db.commit()

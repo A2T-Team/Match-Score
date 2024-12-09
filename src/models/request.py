@@ -11,6 +11,18 @@ from sqlalchemy import (
 )
 from datetime import datetime
 
+from src.models.player import Player
+
+
+class RequestAction(PyEnum):
+
+    """
+    Enum representing the action to be taken on a request.
+    """
+
+    ACCEPT = "Accept"
+    REJECT = "Reject"
+
 
 class RequestType(PyEnum):
 
@@ -20,7 +32,6 @@ class RequestType(PyEnum):
 
     PROMOTE = "Promote Request"
     DEMOTE = "Demote Request"
-    DELETE = "Delete Request"
     LINK = "Link Request"
     UNLINK = "Unlink Request"
 
