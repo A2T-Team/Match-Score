@@ -138,9 +138,15 @@ def view_tournament(tournament_id: UUID, db_session: Session = Depends(get_db)):
 
 @router.get("/")
 def view_all_tournaments(
-    offset: int = Query(description="offset the number of tournaments returned", default=0, ge=0),
-    limit: int = Query(description="limit the number of tournaments returned", default=10, ge=1, le=100),
-    sort: Literal["asc", "desc"] | None = Query(description="sort by start date", default=None),
+    offset: int = Query(
+        description="offset the number of tournaments returned", default=0, ge=0
+    ),
+    limit: int = Query(
+        description="limit the number of tournaments returned", default=10, ge=1, le=100
+    ),
+    sort: Literal["asc", "desc"] | None = Query(
+        description="sort by start date", default=None
+    ),
     search: str | None = Query(description="search by tournament name", default=None),
     db_session: Session = Depends(get_db),
 ):
@@ -159,16 +165,17 @@ def add_players(
     if current_user is None:
         return Unauthorized(content="The user is not authorized to perform this action")
 
-    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
-        return ForbiddenAccess()
-
     tournament = tournaments.get_tournament(
         db_session,
         tournament_id,
     )
+
+    if not tournaments.can_update_tournament(current_user, tournament):
+        return ForbiddenAccess()
+
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
-    
+
     if tournaments.has_matches(tournament):
         return BadRequest("Tournament already has matches")
 
@@ -186,16 +193,17 @@ def delete_players(
     if current_user is None:
         return Unauthorized(content="The user is not authorized to perform this action")
 
-    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
-        return ForbiddenAccess()
-
     tournament = tournaments.get_tournament(
         db_session,
         tournament_id,
     )
+
+    if not tournaments.can_update_tournament(current_user, tournament):
+        return ForbiddenAccess()
+
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
-    
+
     if tournaments.has_matches(tournament):
         return BadRequest("Tournament already has matches")
 
@@ -213,17 +221,17 @@ def update_tournament(
     if current_user is None:
         return Unauthorized(content="The user is not authorized to perform this action")
 
-    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
-        return ForbiddenAccess()
-
     tournament = tournaments.get_tournament(
         db_session,
         tournament_id,
     )
 
+    if not tournaments.can_update_tournament(current_user, tournament):
+        return ForbiddenAccess()
+
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
-    
+
     try:
         tournament = tournaments.update_tournament(tournament_id, data, db_session)
     except custom_exceptions.InvalidRequest as e:
@@ -249,13 +257,14 @@ def create_matches(
     if current_user is None:
         return Unauthorized(content="The user is not authorized to perform this action")
 
-    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
-        return ForbiddenAccess()
-
     tournament = tournaments.get_tournament(
         db_session,
         tournament_id,
     )
+
+    if not tournaments.can_update_tournament(current_user, tournament):
+        return ForbiddenAccess()
+
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
 
@@ -296,16 +305,16 @@ def delete_tournament(
     if current_user is None:
         return Unauthorized(content="The user is not authorized to perform this action")
 
-    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
-        return ForbiddenAccess()
-
     tournament = tournaments.get_tournament(
         db_session,
         tournament_id,
     )
+
+    if not tournaments.can_update_tournament(current_user, tournament):
+        return ForbiddenAccess()
+
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
-    
-    
+
     tournaments.delete_tournament(db_session, tournament_id)
     return OK(content="Tournament deleted")

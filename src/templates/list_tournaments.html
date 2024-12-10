@@ -19,7 +19,7 @@
                         <a href="{{ url_for('get_tournament_html', tournament_id=tournament.id) }}" class="btn btn-dark">
                             See Details</a>
                             
-                        {% if user and user.role.value in ("admin", "director") %}
+                        {% if user and (user.role.value == "admin" or (user.role.value == "director" and user.id == tournament.author_id)) %}
                             <a href="#" class="btn btn-danger" data-bs-toggle="modal"
                                 data-bs-target="#deleteModal{{ tournament.id }}">
                                     <i class="bi bi-trash"></i>
