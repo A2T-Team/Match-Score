@@ -114,6 +114,7 @@ def view_tournament(tournament_id: UUID, db_session: Session = Depends(get_db)):
         draw_points=tournament.draw_points,
         author_id=tournament.author_id,
         total_participants=len(tournament.participants),
+        total_matches=len(tournament.matches),
         participants=[
             {
                 "player_id": participant.id,
@@ -121,14 +122,10 @@ def view_tournament(tournament_id: UUID, db_session: Session = Depends(get_db)):
             }
             for participant in tournament.participants
         ],
-        total_matches=len(tournament.matches),
         matches=[
             {
                 "match_id": match.id,
-                "match_name": (
-                    f"{match.player_a.first_name} {match.player_a.last_name}"
-                    f" vs {match.player_b.first_name} {match.player_b.last_name}",
-                ),
+                "match_name": tournaments.get_match_name(match),
             }
             for match in tournament.matches
         ],
@@ -169,12 +166,11 @@ def add_players(
         db_session,
         tournament_id,
     )
-
-    if not tournaments.can_update_tournament(current_user, tournament):
-        return ForbiddenAccess()
-
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
+    
+    if not tournaments.can_update_tournament(current_user, tournament):
+        return ForbiddenAccess()
 
     if tournaments.has_matches(tournament):
         return BadRequest("Tournament already has matches")
@@ -197,12 +193,11 @@ def delete_players(
         db_session,
         tournament_id,
     )
+    if tournament is None:
+        return NotFound(key="tournament_id", key_value=tournament_id)
 
     if not tournaments.can_update_tournament(current_user, tournament):
         return ForbiddenAccess()
-
-    if tournament is None:
-        return NotFound(key="tournament_id", key_value=tournament_id)
 
     if tournaments.has_matches(tournament):
         return BadRequest("Tournament already has matches")
@@ -226,11 +221,11 @@ def update_tournament(
         tournament_id,
     )
 
-    if not tournaments.can_update_tournament(current_user, tournament):
-        return ForbiddenAccess()
-
     if tournament is None:
         return NotFound(key="tournament_id", key_value=tournament_id)
+    
+    if not tournaments.can_update_tournament(current_user, tournament):
+        return ForbiddenAccess()
 
     try:
         tournament = tournaments.update_tournament(tournament_id, data, db_session)
@@ -261,12 +256,11 @@ def create_matches(
         db_session,
         tournament_id,
     )
+    if tournament is None:
+        return NotFound(key="tournament_id", key_value=tournament_id)
 
     if not tournaments.can_update_tournament(current_user, tournament):
         return ForbiddenAccess()
-
-    if tournament is None:
-        return NotFound(key="tournament_id", key_value=tournament_id)
 
     try:
         matches = tournaments.create_matches(tournament_id, db_session, current_user)
@@ -309,12 +303,11 @@ def delete_tournament(
         db_session,
         tournament_id,
     )
+    if tournament is None:
+        return NotFound(key="tournament_id", key_value=tournament_id)
 
     if not tournaments.can_update_tournament(current_user, tournament):
         return ForbiddenAccess()
-
-    if tournament is None:
-        return NotFound(key="tournament_id", key_value=tournament_id)
 
     tournaments.delete_tournament(db_session, tournament_id)
     return OK(content="Tournament deleted")

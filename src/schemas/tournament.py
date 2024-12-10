@@ -138,9 +138,18 @@ class UpdateTournamentResponse(UpdateTournamentRequest):
     format: str
 
 
-class CreateTournamentResponse(TournamentSchema):
+class CreateTournamentResponse(BaseModel):
     tournament_id: UUID
+    name: str
+    format: str
+    match_format: str
+    start_time: datetime
+    end_time: datetime
+    prize: int
+    win_points: int
+    draw_points: int
+    author_id: UUID
     total_participants: int
-    participants: list
     total_matches: int
+    participants: list
     matches: list
