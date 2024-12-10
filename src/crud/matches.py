@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from src.models.match import Match, MatchFormat, ResultCodes
 from src.models.player import Player
+from src.models.user import User
 from src.models.tournament import Tournament, TournamentParticipants
 from src.common.custom_exceptions import NotFound, ScoreLimit
 from src.crud.tournaments import get_tournament
@@ -8,6 +9,7 @@ from datetime import timedelta
 import uuid
 from fastapi import HTTPException, status
 from src.schemas.match import CreateMatchRequest, MatchUpdateTime, MatchResult #MatchUpdate
+from datetime import datetime
 
 def match_format_to_id(value: str, db_session: Session):
     format = db_session.query(MatchFormat).filter(MatchFormat.type == value).first()
@@ -30,7 +32,7 @@ def match_result_to_id(value: str, db_session: Session):
 #         return match_format_to_id(match_data.format, db_session)
 
 
-def create_match(db: Session, match_data: CreateMatchRequest) -> Match:
+def create_match(db: Session, match_data: CreateMatchRequest, current_user: User) -> Match:
     if match_data.tournament_id:
         tournament = get_tournament(db, match_data.tournament_id)
         if not tournament:
@@ -43,7 +45,7 @@ def create_match(db: Session, match_data: CreateMatchRequest) -> Match:
             start_time = match_data.start_time,
             end_time = match_data.end_time,
             prize = 0,
-            author_id = match_data.author_id,
+            author_id = current_user.id,
             tournament_id = match_data.tournament_id,
             stage = match_data.stage,
             serial_number = match_data.serial_number
@@ -58,7 +60,7 @@ def create_match(db: Session, match_data: CreateMatchRequest) -> Match:
             start_time = match_data.start_time,
             end_time = match_data.end_time,
             prize = match_data.prize,
-            author_id = match_data.author_id,
+            author_id = current_user.id,
         )
 
     #new_match = Match(**match_data.model_dump())
@@ -112,13 +114,16 @@ def check_score_limit(end_condition, score_a, score_b):
         raise ValueError("Scores cannot be None.")
 
     if score_a > end_condition or score_b > end_condition or (score_a == end_condition and score_b == end_condition) or (score_a != end_condition and score_b != end_condition):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="One and only one score must be as the end condition")
 
-def update_match_score(match_id: uuid, updates: MatchResult, db: Session):
+def update_match_score(match_id: uuid, updates: MatchResult, db: Session, current_user: User):
     match = db.query(Match).filter(Match.id == match_id).first()
     if not match:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
-    
+    if match.author_id != current_user.id and current_user.role !='ADMIN':
+         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Current user can't update this match")
+    if (updates.score_a > updates.score_b and (updates.result_code == 'player 2' or updates.result_code == 'draw')) or (updates.score_a < updates.score_b and (updates.result_code == 'player 1' or updates.result_code == 'draw')) or (updates.score_a == updates.score_b and (updates.result_code == 'player 1' or updates.result_code == 'player 2')):
+        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail="Invalid result")
     if match.format_id == 1:
         # if (
         #     updates.score_a > match.end_condition or updates.score_b > match.end_condition or
@@ -140,10 +145,14 @@ def update_match_score(match_id: uuid, updates: MatchResult, db: Session):
     
     return match
 
-def update_match_date(db: Session, match_id: uuid, updates: MatchUpdateTime):
+def update_match_date(db: Session, match_id: uuid, updates: MatchUpdateTime, current_user: User):
     match = db.query(Match).filter(Match.id == match_id).first()
     if not match:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
+    if match.author_id != current_user.id and current_user.role !='ADMIN':
+         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Current user can't update this match")
+    if match.start_time > updates.start_time:
+        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail="Start time can't be before the original time")
     
     if match.format_id == 0:
         match.start_time = updates.start_time
@@ -159,22 +168,27 @@ def update_match_date(db: Session, match_id: uuid, updates: MatchUpdateTime):
     return match
 
 
-def delete_match(db: Session, match_id: uuid.UUID) -> bool:
+def delete_match(db: Session, match_id: uuid.UUID, current_user: User) -> bool:
     match = db.query(Match).filter(Match.id == match_id).first()
     if not match:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Match not found")
+    if match.author_id != current_user.id and current_user.role !='ADMIN':
+         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Current user can't delete this match")
     db.delete(match)
     db.commit()
     return True
 
-def update_player_stats_after_match(db: Session, match_id: uuid.UUID):
+def update_player_stats_after_match(db: Session, match_id: uuid.UUID, current_user: User):
     match = db.query(Match).filter_by(id=match_id).first()
 
-    if not match:
+    if  match is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Match not found"
         )
     
+    if match.author_id != current_user.id and current_user.role !='ADMIN':
+         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Current user can't update this match")
+
     player_1 = db.query(Player).filter_by(id=match.player_a_id).first()
 
     if not player_1:
@@ -194,20 +208,31 @@ def update_player_stats_after_match(db: Session, match_id: uuid.UUID):
 
     if match.tournament_id:
         tournament = db.query(Tournament).filter_by(id=match.tournament_id).first()
-        
+        participant_1 = db.query(TournamentParticipants).filter_by(tournament_id=match.tournament_id , player_id=player_1.id).first()
+        participant_2 = db.query(TournamentParticipants).filter_by(tournament_id=match.tournament_id , player_id=player_2.id).first()
+        next_match = db.query(Match).filter_by(serial_number = match.serial_number // 2).first()
+
         if tournament.format_id == 1:
-            participant_1 = db.query(TournamentParticipants).filter_by(tournament_id=match.tournament_id , player_id=player_1.id).first()
-            participant_2 = db.query(TournamentParticipants).filter_by(tournament_id=match.tournament_id , player_id=player_2.id).first()
 
             if match.result_code == 1:
                 player_1.wins += 1
                 player_2.losses += 1
                 participant_1.score += tournament.win_points
+                # participant_1.stage += 1
+                # if not next_match.player_a:
+                #     next_match.player_a = player_1.id
+                # else:
+                #     next_match.player_b = player_1.id
 
             elif match.result_code == 2:
                 player_1.losses += 1
                 player_2.wins += 1
                 participant_2.score += tournament.win_points
+                # participant_2.stage += 1
+                # if not next_match.player_a:
+                #     next_match.player_a = player_2.id
+                # else:
+                #     next_match.player_b = player_2.id
 
             else:
                 player_1.draws += 1
@@ -219,10 +244,20 @@ def update_player_stats_after_match(db: Session, match_id: uuid.UUID):
             if match.result_code == 1:
                 player_1.wins += 1
                 player_2.losses += 1
+                participant_1.stage += 1
+                if not next_match.player_a:
+                    next_match.player_a = player_1.id
+                else:
+                    next_match.player_b = player_1.id
 
             elif match.result_code == 2:
                 player_1.losses += 1
                 player_2.wins += 1
+                participant_2.stage += 1
+                if not next_match.player_a:
+                    next_match.player_a = player_2.id
+                else:
+                    next_match.player_b = player_2.id
 
             else:
                 player_1.draws += 1
@@ -242,7 +277,8 @@ def update_player_stats_after_match(db: Session, match_id: uuid.UUID):
             player_2.draws += 1
 
     db.commit()
-    db.refresh(player_1, player_2)
+    for player in [player_1, player_2]:
+        db.refresh(player)
     
     return {"detail": "Player statistics updated successfully"}
 

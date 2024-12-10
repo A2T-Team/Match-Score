@@ -34,14 +34,14 @@ class Match(Base):
     start_time = Column(DateTime)
     end_time = Column(DateTime)
     prize = Column(Integer)
-    author_id = Column(UUID,  nullable=False) #ForeignKey("users.id"),
+    author_id = Column(UUID,  nullable=True) #ForeignKey("users.id"),
     tournament_id = Column(UUID, ForeignKey("tournaments.id"))
     stage = Column(Integer)
     serial_number = Column(Integer) 
 
     tournament = relationship("Tournament", back_populates="matches")
-    player_a = relationship("Player", foreign_keys=[player_a_id], back_populates="matches_as_a")
-    player_b = relationship("Player", foreign_keys=[player_b_id], back_populates="matches_as_b")
+    player_a = relationship("Player", foreign_keys=[player_a_id], back_populates="matches_as_a", lazy='select')
+    player_b = relationship("Player", foreign_keys=[player_b_id], back_populates="matches_as_b", lazy='select')
     match_format = relationship("MatchFormat", back_populates="matches")
     #author = relationship("User", back_populates="match")
     result = relationship("ResultCodes", back_populates="match")
