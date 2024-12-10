@@ -1,4 +1,10 @@
 <div class="container">
+    {% if user and user.role.value in ("admin", "director") %}
+    <a href="{{ url_for('create_tournament_html') }}" class="btn btn-dark">
+        <i class="bi bi-plus-lg"></i>
+        Create Tournament
+    </a>
+    {% endif %}
     <div class="row">
         {% for tournament in tournaments %}
             <div class="col-xs-12 col-md-6 col-lg-4">
@@ -7,41 +13,44 @@
                     <div class="card-body">
                         <p class="card-text"><b>Format:</b> {{ tournament.format.type.capitalize() }}</p>
                         <p class="card-text"><b>Match Format:</b> {{ tournament.match_format.type.capitalize() }}</p>
-                        <p class="card-text"><b>Starts:</b> {{ tournament.start_time }}</p>
-                        <p class="card-text"><b>Ends:</b> {{ tournament.end_time }}</p>
-                        <p class="card-text"><b>Prize:</b> {{ tournament.prize }}</p>
-                        <a href="{{ url_for('tournament', tournament_id=tournament.id) }}" class="btn btn-dark">See
-                            Details</a>
-                        {% if user.role in ["admin", "director"] %}
-                            <p class="card-text mt-2 mb-0">
-                                <small class="text-muted">
-                                    <a href="{{ url_for('update', tournament_id=tournament.id) }}" class="card-link">Update</a>
-                                    <a href="#" class="card-link" data-bs-toggle="modal"
-                                        data-bs-target="#deleteModal{{ tournament.id }}">Delete</a>
-                                </small>
-                            </p>
-                            <!-- Confirm deletion -->
-                            <div class="modal fade" id="deleteModal{{ tournament.id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Delete Tournament ID {{ tournament.id }}</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>Deleting an tournament entry is irreversible</p>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-outline-dark"
-                                                data-bs-dismiss="modal">Close</button>
-                                            <a class="btn btn-outline-danger"
-                                                href="{{ url_for('delete', tournament_id=tournament.id) }}">Delete</a>
-                                        </div>
+                        <p class="card-text"><b>Starts:</b> {{ tournament.start_time.strftime('%Y-%b-%d %I:%M %p') }}</p>
+                        <p class="card-text"><b>Ends:</b> {{ tournament.end_time.strftime('%Y-%b-%d %I:%M %p') }}</p>
+                        <p class="card-text"><b>Prize:</b> {{ tournament.prize }} BGN </p>
+                        <a href="{{ url_for('get_tournament_html', tournament_id=tournament.id) }}" class="btn btn-dark">
+                            See Details</a>
+                            
+                        {% if user and (user.role.value == "admin" or (user.role.value == "director" and user.id == tournament.author_id)) %}
+                            <a href="#" class="btn btn-danger" data-bs-toggle="modal"
+                                data-bs-target="#deleteModal{{ tournament.id }}">
+                                    <i class="bi bi-trash"></i>
+                                    Delete
+                            </a>
+                        {% endif %}
+                        <!-- Confirm deletion -->
+                        <div class="modal fade" id="deleteModal{{ tournament.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Delete Tournament {{ tournament.name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Deleting an tournament entry is irreversible</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-outline-dark"
+                                            data-bs-dismiss="modal">Close</button>
+                                        <a class="btn btn-outline-danger"
+                                            href="{{ url_for('delete_tournament_html', tournament_id=tournament.id) }}">
+                                                <i class="bi bi-trash"></i>
+                                                Delete
+                                        </a>
                                     </div>
                                 </div>
                             </div>
-                        {% endif %}
+                        </div>
+                      
                     </div>
                 </div>
             </div>

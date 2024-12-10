@@ -1,0 +1,24 @@
+<div class="row">
+    <h3 class="text-dark"><strong>Stages</strong></h3>
+    {% for stage in range(tournament.num_stages) %}
+        <div class="col align-self-center">
+            <h5 class="text-center bg-danger text-white p-2"><strong>Stage {{ stage+1 }}</strong></h5>
+            {% for match in tournament.matches %}
+                {% if match.stage == stage %}
+                    {% include 'match_card.html' %}
+                    {% if match.stage != 0 and match.stage + 1 != tournament.num_stages and match.serial_number % 2 == 0 %}
+                        <div class="card my-3" style="visibility: hidden;">
+                            <div class="card-header bg-dark text-white text-center p-0">
+                                Invisible Card
+                            </div>
+                        <div class="card-body">
+                            <p class="card-text">This card is for spacing purposes.</p>
+                            <p class="card-text">This card is for spacing purposes.</p>
+                        </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>

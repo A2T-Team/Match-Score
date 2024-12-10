@@ -1,6 +1,24 @@
 {% extends 'layout.html' %}
 {% block content %}
 <container class="container mt-5 pt-4">
+    {% if user and (user.role.value == "admin" or (user.role.value == "director" and user.id == tournament.author_id)) %}
+    <a href="{{ url_for('update_tournament_html', tournament_id=tournament.id) }}" class="btn btn-dark">
+        <i class="bi bi-pencil"></i>
+        Update Tournament
+    </a>
+    {% endif %}
+
+    {% if user and (user.role.value == "admin" or (user.role.value == "director" and user.id == tournament.author_id)) and not tournament.matches %}
+    <a href="{{ url_for('tournament_create_matches_html', tournament_id=tournament.id) }}" class="btn btn-dark">
+        <i class="bi bi-plus-lg"></i>
+        Create Matches
+    </a>
+    <a href="{{ url_for('add_participant_in_tournament_html', tournament_id=tournament.id) }}" class="btn btn-dark">
+        <i class="bi bi-person-plus-fill"></i>
+        Add Participant
+    </a>
+    {% endif %}
+    <br>
     <div class="row">
         <!-- Tournament Info Section -->
         <div class="col-md-12">
@@ -10,57 +28,50 @@
                 </div>
                 <div class="card-body">
                     <p class="card-text">
-                        <strong>Start Time:</strong> <span id="start-time">{{ tournament.start_time }}</span><br>
-                        <strong>End Time:</strong> <span id="end-time">{{ tournament.end_time }}</span><br>
-                        <strong>Format:</strong> <span id="end-time">{{ tournament.format.type.capitalize() }}</span><br>
-                        <strong>Match Format:</strong> <span id="end-time">{{ tournament.match_format.type.capitalize() }}</span><br>
-                        <strong>Prize:</strong> <span id="end-time">{{ tournament.prize }}</span>
+                        <strong>Start Time:</strong> <span id="start-time">{{ tournament.start_time.strftime('%Y-%b-%d %I:%M %p') }}</span><br>
+                        <strong>End Time:</strong> <span id="end-time">{{ tournament.end_time.strftime('%Y-%b-%d %I:%M %p') }}</span><br>
+                        <strong>Format:</strong> <span id="format">{{ tournament.format.type.capitalize() }}</span><br>
+                        <strong>Match Format:</strong> <span id="match_format">{{ tournament.match_format.type.capitalize() }}</span><br>
+                        <strong>All Stages:</strong> <span id="stages">{{ tournament.num_stages }}</span><br>
+                        <strong>Total Players:</strong> <span id="players">{{ tournament.participants|length }}</span><br>
+                        <strong>All Matches:</strong> <span id="players">{{ tournament.matches|length }}</span><br>
+                        <strong>Prize:</strong> <span id="end-time">{{ tournament.prize }} BGN </span>
                     </p>
                 </div>
             </div>
         </div>
 
-        <!-- Players Section -->
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    Players
-                </div>
-                <ul class="list-group list-group-flush" id="players-list">
-                    {% for player in tournament.participants %}
-                        <li class="list-group-item">{{ player.first_name }} {{ player.last_name }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-
         <!-- Matches Section -->
-        {% for stage in tournament.stage %}
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    {{ tournament.stage }}
-                </div>
-                <ul class="list-group list-group-flush" id="matches-list">
-                    {% for match in tournament.matches %}
-                        <li class="list-group-item">{{ match.player_a.first_name }} vs {{ match.player_b.first_name }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</container>
-{% endblock content %}<div class="col-md-6">
-    <div class="card mb-4">
-        <div class="card-header">
-            Matches
-        </div>
-        <ul class="list-group list-group-flush" id="matches-list">
-            {% for match in tournament.matches %}
-                <li class="list-group-item">{{ match.player_a.first_name }} vs {{ match.player_b.first_name }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-</div>
+        {% if tournament.matches %}
+            {% if tournament.format.type == "league" %}
+                {% include 'list_matches_league.html' %}
+            {% else %}
+                {% include 'list_matches_knockout.html' %}
+            {% endif %}
+        {% else %}
+            <h4 class="text-dark mb-4"> Tournament doesn't have matches </h4>
+        {% endif %}
 
+        <!-- Players Section -->
+        {% if tournament.participants %}
+            <div class="row">
+                <div class="card my-3 p-0">
+                    <div class="card-header text-center bg-danger text-white">
+                        <strong>Players</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="row row-cols-1 row-cols-md-4 g-2">
+                            {% for player in tournament.participants %} 
+                                <div class="col">
+                                    {% include 'player_card.html' %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <h4 class="text-dark mb-4"> Tournament doesn't have players </h4>
+        {% endif %}
+</container>
+{% endblock content %}

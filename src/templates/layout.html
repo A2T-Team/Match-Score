@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="src/static/main.css">
+    <link rel="stylesheet" type="text/css" href="/static/main.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
 
     {% if title %}
         <title>MatchScore - {{ title }}</title>
@@ -56,9 +58,9 @@
         </div>
     </nav>
     <!-- </header> -->
-    <main role="main" class="container pt-5">
+    <main role="main" class="container">
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-lg-18">
                 <!-- Flashed alerts -->
                 {% if flash_message %}
                     <div class="alert alert-dark mt-3" role="alert">
@@ -68,27 +70,18 @@
                 <!-- Main content block -->
                 {% block content %}{% endblock %}
             </div>
-            <!-- Side bar -->
-            <div class="col-md-4">
-                <div class="content-section my-4">
-                    <ul class="list-group">
-                        <li class="list-group-item list-group-item-light">
-                            <a class="nav-link" href="/">My Tournaments</a>
-                        </li>
-                        <li class="list-group-item list-group-item-light">
-                            <a class="nav-link" href="/">My Stats</a>
-                        </li>
-                        <li class="list-group-item list-group-item-light">Calendars</li>
-                        <li class="list-group-item list-group-item-light">etc</li>
-                    </ul>
-                </div>
-            </div>
         </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous">
         </script>
+        
+        <script type="text/javascript">
+            $(function () {
+                $('#datetimepicker1').datetimepicker();
+            });
+         </script>
 </body>
 
 </html>

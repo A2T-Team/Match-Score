@@ -2,7 +2,7 @@ from src.schemas.tournament import TournamentSchema, Participant, UpdateTourname
 from src.models.tournament import Tournament, TournamentFormat, TournamentParticipants
 from src.models.match import Match, MatchFormat
 from src.models.player import Player
-from src.models.user import User
+from src.models.user import User, Role
 from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc, and_
 from src.common.custom_responses import AlreadyExists
@@ -42,7 +42,7 @@ def match_format_to_id(value: str, db_session: Session) -> int | None:
     """
     The function queries the database for a `MatchFormat` record
     with a `type` matching the given value. If a matching record
-    is found, its ID is returned. If no match is found, `None` is returned.
+    is found, its ID is returned. If no match is found, `None` is returned
     """
     format = db_session.query(MatchFormat).filter(MatchFormat.type == value).first()
     if format is None:
@@ -50,6 +50,36 @@ def match_format_to_id(value: str, db_session: Session) -> int | None:
 
     return format.id
 
+
+def can_update_tournament(current_user: User, tournament: Tournament) -> bool:
+    """
+    Checks if the current user has access to the given tournament.
+
+    Args:
+       current_user (User): The user whose access is being checked
+       tournament (Tournament): The tournament in question
+       db_session (Session): The database session
+    """
+    if current_user.role is Role.ADMIN:
+        return True
+    if current_user.role is Role.DIRECTOR and current_user.id == tournament.author_id:
+        return True
+    
+    return False
+
+def get_match_name(match: Match) -> str:
+    match_name = ""
+    if match.player_a:
+        match_name = f"{match.player_a.first_name} {match.player_a.last_name}"
+    else:
+        match_name = f"Winner of m{match.serial_number*2 + 1} s{match.stage}"
+
+    if match.player_b:
+        match_name += f" vs {match.player_b.first_name} {match.player_b.last_name}"
+    else:
+        match_name += f" vs Winner of m{match.serial_number*2 + 2} s{match.stage}"
+
+    return match_name
 
 def create(
     tournament: TournamentSchema,
@@ -314,6 +344,42 @@ def delete_players(
         result[full_name]["status"] = "Deleted"
 
     return result
+
+
+def remove_player(
+    db_session: Session, tournament_id: UUID, player_id: UUID
+) -> None:
+    """
+    Remove participant from a tournament.
+
+    The function removes a single participant from a specified tournament.
+    - It checks if the participant is registered in the given tournament.
+    - If found, the participant's association with the tournament is removed.
+    - If not found, the function raises NotFound exception
+
+    Args:
+        db_session (Session): The database session used for querying and committing changes.
+        tournament_id (UUID): The unique identifier of the tournament from which participants will be removed.
+        player_id (UUID):  The unique identifier of the participant to be removed.
+
+    Returns:
+        None
+    """
+    tournament_participant = (
+        db_session.query(TournamentParticipants)
+        .filter(
+            and_(
+                TournamentParticipants.player_id == player_id,
+                TournamentParticipants.tournament_id == tournament_id,
+            )
+        )
+        .first()
+    )
+    if tournament_participant is None:
+        raise NotFound(key="participant", key_value=player_id)
+
+    db_session.delete(tournament_participant)
+    db_session.commit()
 
 
 def update_tournament(
@@ -665,6 +731,11 @@ def delete_tournament(db_session, tournament_id):
         db_session.delete(tournament)
         db_session.commit()
 
+
+def get_all_players(db: Session) -> list[Player]:
+    players = db.query(Player).order_by(Player.first_name).all()
+    
+    return players
 
 # def _create_league_matches_with_groups(
 #     tournament: Tournament, db_session: Session, current_user: User

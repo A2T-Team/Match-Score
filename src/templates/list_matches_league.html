@@ -1,0 +1,21 @@
+<div class="row">
+    <h3 class="text-dark"><strong>Stages</strong></h3>
+    {% for stage in range(tournament.num_stages) %}
+        <div class="card my-3 p-0">
+            <div class="card-header text-center bg-danger text-white">
+                <strong>Stage {{ stage+1 }}</strong>
+            </div>
+            <div class="card-body">
+                <div class="row row-cols-1 row-cols-md-2 g-2">
+                    {% for match in tournament.matches %}
+                        {% if match.stage == stage %}
+                            <div class="col">
+                                {% include 'match_card.html' %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>

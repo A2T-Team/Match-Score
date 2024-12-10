@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from src.api.v1.routes import api_router
 from src.web.routes import web_router
 from src.core.config import Settings, settings
@@ -34,6 +35,7 @@ class App:
         self.__setup_middlewares(settings=settings)
         self.__setup_api_routes(settings=settings, router=api_router)
         self.__setup_web_routes(router=web_router)
+        self.__app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
     def __setup_middlewares(self, settings: Settings):
         self.__app.add_middleware(
