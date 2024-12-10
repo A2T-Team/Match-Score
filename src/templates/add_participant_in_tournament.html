@@ -1,0 +1,67 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="col-md-12">
+    <div class="card mb-4">
+        <div class="card-header">
+            {{ tournament.name }}
+        </div>
+        <div class="card-body">
+            <p class="card-text">
+                <strong>Start Time:</strong> <span id="start-time">{{ tournament.start_time.strftime('%Y-%b-%d %I:%M %p') }}</span><br>
+                <strong>End Time:</strong> <span id="end-time">{{ tournament.end_time.strftime('%Y-%b-%d %I:%M %p') }}</span><br>
+                <strong>Format:</strong> <span id="format">{{ tournament.format.type.capitalize() }}</span><br>
+                <strong>Match Format:</strong> <span id="match_format">{{ tournament.match_format.type.capitalize() }}</span><br>
+                <strong>All Stages:</strong> <span id="stages">{{ tournament.num_stages }}</span><br>
+                <strong>Total Players:</strong> <span id="players">{{ tournament.participants|length }}</span><br>
+                <strong>All Matches:</strong> <span id="players">{{ tournament.matches|length }}</span><br>
+                <strong>Prize:</strong> <span id="end-time">{{ tournament.prize }} BGN </span>
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card my-3 p-0">
+    <div class="card-header text-center bg-dark text-white">
+        <strong>Select Available Player</strong>
+    </div>
+    <div class="content-section">
+        <form method="POST" action="/tournament/{{tournament.id}}/submit_update">
+            <div class="form-group mb-3">
+                <label for="name">Select Name</label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="Enter name" value="{{ tournament.name }}">
+            </div>
+            <div class="form-group">
+                <label for="participants">Select Players</label>
+                <select multiple class="form-control" id="participants" name="participants" multiple>
+                    {% for player in players %}
+                        <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }}</option>
+                    {% endfor %}
+                </select>
+              </div>
+            <button type="submit" class="btn btn-dark my-2">Add Participant</button>
+        </form>
+    </div>
+</div>
+
+<div class="card my-3 p-0">
+    <div class="card-header text-center bg-dark text-white">
+        <strong>Add New Player</strong>
+    </div>
+    <div class="content-section">
+        <form method="POST" action="/tournament/{{tournament.id}}/submit_update">
+            <div class="form-group mb-3">
+                <label for="name">First Name</label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="Enter name" value="{{ tournament.name }}">
+            </div>
+            <div class="form-group mb-3">
+                <label for="name">Last Name</label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="Enter name" value="{{ tournament.name }}">
+            </div>
+            
+            <button type="submit" class="btn btn-dark my-2">Add Participant</button>
+        </form>
+    </div>
+</div>
+
+{% endblock content %}

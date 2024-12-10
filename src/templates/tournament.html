@@ -1,17 +1,21 @@
 {% extends 'layout.html' %}
 {% block content %}
 <container class="container mt-5 pt-4">
-    {% if user and user.role.value in ("admin", "director") %}
+    {% if user and (user.role.value == "admin" or (user.role.value == "director" and user.id == tournament.author_id)) %}
     <a href="{{ url_for('update_tournament_html', tournament_id=tournament.id) }}" class="btn btn-dark">
         <i class="bi bi-pencil"></i>
         Update Tournament
     </a>
     {% endif %}
 
-    {% if user and user.role.value in ("admin", "director") and not tournament.matches %}
+    {% if user and (user.role.value == "admin" or (user.role.value == "director" and user.id == tournament.author_id)) and not tournament.matches %}
     <a href="{{ url_for('tournament_create_matches_html', tournament_id=tournament.id) }}" class="btn btn-dark">
         <i class="bi bi-plus-lg"></i>
         Create Matches
+    </a>
+    <a href="{{ url_for('add_participant_in_tournament_html', tournament_id=tournament.id) }}" class="btn btn-dark">
+        <i class="bi bi-person-plus-fill"></i>
+        Add Participant
     </a>
     {% endif %}
     <br>

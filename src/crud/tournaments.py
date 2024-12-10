@@ -2,7 +2,7 @@ from src.schemas.tournament import TournamentSchema, Participant, UpdateTourname
 from src.models.tournament import Tournament, TournamentFormat, TournamentParticipants
 from src.models.match import Match, MatchFormat
 from src.models.player import Player
-from src.models.user import User
+from src.models.user import User, Role
 from sqlalchemy.orm import Session
 from sqlalchemy import asc, desc, and_
 from src.common.custom_responses import AlreadyExists
@@ -42,7 +42,7 @@ def match_format_to_id(value: str, db_session: Session) -> int | None:
     """
     The function queries the database for a `MatchFormat` record
     with a `type` matching the given value. If a matching record
-    is found, its ID is returned. If no match is found, `None` is returned.
+    is found, its ID is returned. If no match is found, `None` is returned
     """
     format = db_session.query(MatchFormat).filter(MatchFormat.type == value).first()
     if format is None:
@@ -50,6 +50,22 @@ def match_format_to_id(value: str, db_session: Session) -> int | None:
 
     return format.id
 
+
+def can_update_tournament(current_user: User, tournament: Tournament) -> bool:
+    """
+    Checks if the current user has access to the given tournament.
+
+    Args:
+       current_user (User): The user whose access is being checked
+       tournament (Tournament): The tournament in question
+       db_session (Session): The database session
+    """
+    if current_user.role is Role.ADMIN:
+        return True
+    if current_user.role is Role.DIRECTOR and current_user.id == tournament.author_id:
+        return True
+    
+    return False
 
 def create(
     tournament: TournamentSchema,
@@ -701,6 +717,11 @@ def delete_tournament(db_session, tournament_id):
         db_session.delete(tournament)
         db_session.commit()
 
+
+def get_all_players(db: Session) -> list[Player]:
+    players = db.query(Player).order_by(Player.first_name).all()
+    
+    return players
 
 # def _create_league_matches_with_groups(
 #     tournament: Tournament, db_session: Session, current_user: User

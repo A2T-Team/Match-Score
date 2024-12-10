@@ -10,7 +10,7 @@
         <div class="d-inline">
             <a href="#" class="btn btn-secondary">See Profile</a>
 
-            {% if user and user.role.value in ("admin", "director") %}
+            {% if user and (user.role.value == "admin" or (user.role.value == "director" and user.id == tournament.author_id)) and not tournament.matches %}
                 <a href="#" class="btn btn-danger" data-bs-toggle="modal"
                     data-bs-target="#deleteModal{{ player.id }}">
                     <i class="bi bi-trash"></i>
