@@ -11,7 +11,7 @@ class CreateMatchRequest(BaseModel):
     start_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM'"])
     end_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM'"])
     prize: Optional[int] = Field(description="Prize for the match, must be 0 or positive")
-    author_id: uuid.UUID = Field(description="Author ID")
+    #author_id: uuid.UUID = Field(description="Author ID")
     tournament_id: Optional[uuid.UUID] = Field(description="Tournament ID")
     stage: Optional[int] = Field(description="Stage if in tournament")
     serial_number: Optional[int] = Field(description="Serial number if in tournament")

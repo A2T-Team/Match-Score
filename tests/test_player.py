@@ -109,7 +109,6 @@ class PlayerCRUD_Should(unittest.TestCase):
         tournament_id = uuid4()
         player = Player(**self.player_data)
 
-        # Set up the mock chain for query().join().filter().order_by().all()
         query_mock = self.db_session.query.return_value
         join_mock = query_mock.join.return_value
         filter_mock = join_mock.filter.return_value
@@ -133,8 +132,9 @@ class PlayerCRUD_Should(unittest.TestCase):
     def test_delete_player_success(self):
         player = Player(**self.player_data)
         self.db_session.query().filter_by().first.return_value = player
+        mock_current_user = User(id=uuid4(), username="testuser", role='ADMIN')
 
-        result = delete_player(self.db_session, player.id)
+        result = delete_player(self.db_session, player.id,mock_current_user)
 
         assert result is True
         self.db_session.delete.assert_called_once_with(player)
@@ -142,9 +142,10 @@ class PlayerCRUD_Should(unittest.TestCase):
 
     def test_delete_player_not_found(self):
         self.db_session.query().filter_by().first.return_value = None
+        mock_current_user = User(id=uuid4(), username="testuser", role='ADMIN')
 
         with self.assertRaises(HTTPException) as excinfo:
-            delete_player(self.db_session, uuid4())
+            delete_player(self.db_session, uuid4(), mock_current_user)
 
         assert excinfo.exception.status_code == 404
         assert excinfo.exception.detail == "Player not found"

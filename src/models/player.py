@@ -26,7 +26,7 @@ class Player(Base):
     )
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
-    country = Column(String(50))
+    country = Column(String(50), nullable=True)
     team_id = Column(UUID, nullable=True)
     matches_played = Column(Integer, default=0, nullable=True)
     wins = Column(Integer, default=0, nullable=True)

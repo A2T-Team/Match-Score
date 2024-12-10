@@ -5,6 +5,17 @@ from sqlalchemy.orm import Session
 from src.schemas.match import CreateMatchRequest, MatchResponse, MatchResult, MatchUpdateTime #MatchUpdate
 from src.crud import matches
 import uuid 
+from src.models.user import User, Role
+from src.core.auth import get_current_user
+from src.common.custom_responses import (
+    AlreadyExists,
+    InternalServerError,
+    NotFound,
+    OK,
+    Unauthorized,
+    ForbiddenAccess,
+    BadRequest,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +24,13 @@ router = APIRouter()
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED) #, response_model=MatchResponse
-def post_match(request: CreateMatchRequest, db: Session = Depends(get_db)):
-    return matches.create_match(db, request)
+def post_match(request: CreateMatchRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if current_user is None:
+        return Unauthorized(content="The user is not authorized to perform this action")
+
+    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
+        return ForbiddenAccess()
+    return matches.create_match(db, request, current_user)
     #return MatchResponse.model_validate(new_match)
 
 
@@ -38,21 +54,41 @@ def get_all_matches(
 #     match = matches.update_match(db, match_id, updates)
 #     return MatchResponse.model_validate(match)
 
-@router.put("/{match_id}/score") #, response_model=MatchResponse
-def put_match_score(match_id: uuid.UUID, updates: MatchResult, db: Session = Depends(get_db)):
-    return matches.update_match_score(match_id, updates, db)
+@router.patch("/{match_id}/score") #, response_model=MatchResponse
+def patch_match_score(match_id: uuid.UUID, updates: MatchResult, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if current_user is None:
+        return Unauthorized(content="The user is not authorized to perform this action")
+
+    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
+        return ForbiddenAccess()
+    return matches.update_match_score(match_id, updates, db, current_user)
     #return MatchResponse.model_validate(match)
 
-@router.put("/{match_id}/date") #, response_model=MatchResponse
-def put_match_date(match_id: uuid.UUID, updates: MatchUpdateTime, db: Session = Depends(get_db)):
-    return matches.update_match_date(db, match_id, updates)
+@router.patch("/{match_id}/date") #, response_model=MatchResponse
+def patch_match_date(match_id: uuid.UUID, updates: MatchUpdateTime, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if current_user is None:
+        return Unauthorized(content="The user is not authorized to perform this action")
+
+    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
+        return ForbiddenAccess()
+    return matches.update_match_date(db, match_id, updates, current_user)
     #return MatchResponse.model_validate(match)
 
 
 @router.delete("/{match_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_match(match_id: uuid.UUID, db: Session = Depends(get_db)):
-    return matches.delete_match(db, match_id)
+def delete_match(match_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if current_user is None:
+        return Unauthorized(content="The user is not authorized to perform this action")
+
+    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
+        return ForbiddenAccess()
+    return matches.delete_match(db, match_id, current_user)
 
 @router.post("/match/{match_id}/update_stats", status_code=status.HTTP_200_OK)
-def put_player_stats(match_id: uuid.UUID, db: Session = Depends(get_db)):
-    return matches.update_player_stats_after_match(db, match_id)
+def put_player_stats(match_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if current_user is None:
+        return Unauthorized(content="The user is not authorized to perform this action")
+
+    if current_user.role not in {Role.ADMIN, Role.DIRECTOR}:
+        return ForbiddenAccess()
+    return matches.update_player_stats_after_match(db, match_id, current_user)
