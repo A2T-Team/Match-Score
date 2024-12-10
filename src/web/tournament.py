@@ -94,15 +94,15 @@ def delete_tournament_html(
         return response
     
     tournament = tournaments.get_tournament(db_session, tournament_id)
+    
+    if tournament is None:
+        response = RedirectResponse(url="/", status_code=302)
+        response.set_cookie(key="flash_message", value="Tournament not found")
+        return response
 
     if not tournaments.can_update_tournament(user, tournament):
         response = RedirectResponse(url="/", status_code=302)
         response.set_cookie(key="flash_message", value="User not authorized")
-        return response
-
-    if tournament is None:
-        response = RedirectResponse(url="/", status_code=302)
-        response.set_cookie(key="flash_message", value="Tournament not found")
         return response
 
     tournaments.delete_tournament(db_session, tournament_id)
@@ -237,15 +237,15 @@ def tournament_create_matches_html(
         return response
     
     tournament = tournaments.get_tournament(db_session, tournament_id)
-
-    if not tournaments.can_update_tournament(user, tournament):
-        response = RedirectResponse(url="/", status_code=302)
-        response.set_cookie(key="flash_message", value="User not authorized")
-        return response
     
     if tournament is None:
         response = RedirectResponse(url="/", status_code=302)
         response.set_cookie(key="flash_message", value="Tournament not found")
+        return response
+
+    if not tournaments.can_update_tournament(user, tournament):
+        response = RedirectResponse(url="/", status_code=302)
+        response.set_cookie(key="flash_message", value="User not authorized")
         return response
 
     try:
@@ -293,15 +293,15 @@ def delete_player_html(
         return response
     
     tournament = tournaments.get_tournament(db_session, tournament_id)
-
-    if not tournaments.can_update_tournament(user, tournament):
-        response = RedirectResponse(url=redirect_url, status_code=302)
-        response.set_cookie(key="flash_message", value="User not authorized")
-        return response
-
+    
     if tournament is None:
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="Tournament not found")
+        return response
+    
+    if not tournaments.can_update_tournament(user, tournament):
+        response = RedirectResponse(url=redirect_url, status_code=302)
+        response.set_cookie(key="flash_message", value="User not authorized")
         return response
     
     if tournaments.has_matches(tournament):
@@ -340,15 +340,15 @@ def update_tournament_html(
         return response
     
     tournament = tournaments.get_tournament(db_session, tournament_id)
-
-    if not tournaments.can_update_tournament(user, tournament):
-        response = RedirectResponse(url=redirect_url, status_code=302)
-        response.set_cookie(key="flash_message", value="User not authorized")
-        return response
     
     if tournament is None:
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="Tournament not found")
+        return response
+
+    if not tournaments.can_update_tournament(user, tournament):
+        response = RedirectResponse(url=redirect_url, status_code=302)
+        response.set_cookie(key="flash_message", value="User not authorized")
         return response
 
     response = templates.TemplateResponse(
@@ -384,15 +384,15 @@ def submit_tournament_update(
         return response
 
     tournament = tournaments.get_tournament(session, tournament_id)
-
-    if not tournaments.can_update_tournament(user, tournament):
-        response = RedirectResponse(url=redirect_url, status_code=302)
-        response.set_cookie(key="flash_message", value="User not authorized")
-        return response
     
     if tournament is None:
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="Tournament not found")
+        return response
+    
+    if not tournaments.can_update_tournament(user, tournament):
+        response = RedirectResponse(url=redirect_url, status_code=302)
+        response.set_cookie(key="flash_message", value="User not authorized")
         return response
     
     name = name if name else None
@@ -461,15 +461,15 @@ def add_participant_in_tournament_html(
         return response
 
     tournament = tournaments.get_tournament(db_session, tournament_id)
-
-    if not tournaments.can_update_tournament(user, tournament):
-        response = RedirectResponse(url=redirect_url, status_code=302)
-        response.set_cookie(key="flash_message", value="User not authorized")
-        return response
-
+    
     if tournament is None:
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="Tournament not found")
+        return response
+    
+    if not tournaments.can_update_tournament(user, tournament):
+        response = RedirectResponse(url=redirect_url, status_code=302)
+        response.set_cookie(key="flash_message", value="User not authorized")
         return response
     
     players = tournaments.get_all_players(db_session)

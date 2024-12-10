@@ -67,6 +67,20 @@ def can_update_tournament(current_user: User, tournament: Tournament) -> bool:
     
     return False
 
+def get_match_name(match: Match) -> str:
+    match_name = ""
+    if match.player_a:
+        match_name = f"{match.player_a.first_name} {match.player_a.last_name}"
+    else:
+        match_name = f"Winner of m{match.serial_number*2 + 1} s{match.stage}"
+
+    if match.player_b:
+        match_name += f" vs {match.player_b.first_name} {match.player_b.last_name}"
+    else:
+        match_name += f" vs Winner of m{match.serial_number*2 + 2} s{match.stage}"
+
+    return match_name
+
 def create(
     tournament: TournamentSchema,
     current_user: User,
