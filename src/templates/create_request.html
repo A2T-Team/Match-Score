@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Request</title>
+</head>
+<body>
+    <h1>Create a New Request</h1>
+    <form method="post" action="/">
+        <label for="request_type">Request Type:</label>
+        <select id="request_type" name="type">
+            <option value="PROMOTE">Promote</option>
+            <option value="DEMOTE">Demote</option>
+        </select>
+        <br><br>
+        <label for="request_details">Details:</label>
+        <textarea id="request_details" name="details"></textarea>
+        <br><br>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+</head>
+<body>
+    <h1>Your Profile</h1>
+    <p>Username: {username}</p>
+    <p>Email: {email}</p>
+    <p>Status: Active</p>
+
+    <h2>Update Email</h2>
+    <form method="post" action="/me/email">
+        <label for="new_email">New Email:</label>
+        <input type="email" id="new_email" name="new_email" required>
+        <button type="submit">Update</button>
+    </form>
+</body>
+</html>
