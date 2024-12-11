@@ -9,7 +9,11 @@ from src.core.auth import get_current_user
 from src.api.deps import get_db
 from src.crud import tournaments
 from src.models.user import User, Role
-from src.schemas.tournament import TournamentSchema, UpdateTournamentRequest
+from src.schemas.tournament import (
+    TournamentSchema,
+    UpdateTournamentRequest,
+    Participant,
+)
 from src.common import custom_exceptions
 from psycopg2.errors import UniqueViolation
 from sqlalchemy.exc import IntegrityError
@@ -92,9 +96,9 @@ def delete_tournament_html(
         response = RedirectResponse(url="/", status_code=302)
         response.set_cookie(key="flash_message", value="User not authenticated")
         return response
-    
+
     tournament = tournaments.get_tournament(db_session, tournament_id)
-    
+
     if tournament is None:
         response = RedirectResponse(url="/", status_code=302)
         response.set_cookie(key="flash_message", value="Tournament not found")
@@ -235,9 +239,9 @@ def tournament_create_matches_html(
         response = RedirectResponse(url="/", status_code=302)
         response.set_cookie(key="flash_message", value="User not authenticated")
         return response
-    
+
     tournament = tournaments.get_tournament(db_session, tournament_id)
-    
+
     if tournament is None:
         response = RedirectResponse(url="/", status_code=302)
         response.set_cookie(key="flash_message", value="Tournament not found")
@@ -291,24 +295,27 @@ def delete_player_html(
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="User not authenticated")
         return response
-    
+
     tournament = tournaments.get_tournament(db_session, tournament_id)
-    
+
     if tournament is None:
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="Tournament not found")
         return response
-    
+
     if not tournaments.can_update_tournament(user, tournament):
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="User not authorized")
         return response
-    
+
     if tournaments.has_matches(tournament):
         response = RedirectResponse(url=redirect_url, status_code=302)
-        response.set_cookie(key="flash_message", value="Tournament already has matches. Not allowed to delete players")
+        response.set_cookie(
+            key="flash_message",
+            value="Tournament already has matches. Not allowed to delete players",
+        )
         return response
-    
+
     try:
         tournaments.remove_player(db_session, tournament_id, player_id)
     except custom_exceptions.NotFound as e:
@@ -338,9 +345,9 @@ def update_tournament_html(
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="User not authenticated")
         return response
-    
+
     tournament = tournaments.get_tournament(db_session, tournament_id)
-    
+
     if tournament is None:
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="Tournament not found")
@@ -384,17 +391,17 @@ def submit_tournament_update(
         return response
 
     tournament = tournaments.get_tournament(session, tournament_id)
-    
+
     if tournament is None:
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="Tournament not found")
         return response
-    
+
     if not tournaments.can_update_tournament(user, tournament):
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="User not authorized")
         return response
-    
+
     name = name if name else None
     start_time = start_time.replace("-", "/").replace("T", " ") if start_time else None
     end_time = end_time.replace("-", "/").replace("T", " ") if end_time else None
@@ -439,7 +446,9 @@ def submit_tournament_update(
         response.set_cookie(key="flash_message", value="Database error")
         return response
 
-    response = RedirectResponse(url=f"/tournament/{tournament_id}/detail", status_code=302)
+    response = RedirectResponse(
+        url=f"/tournament/{tournament_id}/detail", status_code=302
+    )
     response.set_cookie(key="flash_message", value="Tournament updated successfully")
     return response
 
@@ -461,17 +470,17 @@ def add_participant_in_tournament_html(
         return response
 
     tournament = tournaments.get_tournament(db_session, tournament_id)
-    
+
     if tournament is None:
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="Tournament not found")
         return response
-    
+
     if not tournaments.can_update_tournament(user, tournament):
         response = RedirectResponse(url=redirect_url, status_code=302)
         response.set_cookie(key="flash_message", value="User not authorized")
         return response
-    
+
     players = tournaments.get_all_players(db_session)
 
     response = templates.TemplateResponse(
@@ -485,4 +494,74 @@ def add_participant_in_tournament_html(
         },
     )
     response.delete_cookie("flash_message")
+    return response
+
+
+@tournament_router.post("/{tournament_id}/submit_add_participant")
+def submit_add_participant(
+    request: Request,
+    tournament_id: UUID,
+    first_name: str | None = Form(None),
+    last_name: str | None = Form(None),
+    participants: list[UUID] | None = Form(None),
+    session: Session = Depends(get_db),
+):
+    token = request.cookies.get("token")
+    user = get_current_user(token, session)
+    redirect_url = request.headers.get("Referer", "/")
+
+    if user is None:
+        response = RedirectResponse(url=redirect_url, status_code=302)
+        response.set_cookie(key="flash_message", value="User not authenticated")
+        return response
+
+    tournament = tournaments.get_tournament(session, tournament_id)
+
+    if tournament is None:
+        response = RedirectResponse(url=redirect_url, status_code=302)
+        response.set_cookie(key="flash_message", value="Tournament not found")
+        return response
+
+    if not tournaments.can_update_tournament(user, tournament):
+        response = RedirectResponse(url=redirect_url, status_code=302)
+        response.set_cookie(key="flash_message", value="User not authorized")
+        return response
+
+    if tournaments.has_matches(tournament):
+        response = RedirectResponse(url=redirect_url, status_code=302)
+        response.set_cookie(
+            key="flash_message",
+            value="Tournament already has matches. Not allowed to add players",
+        )
+        return response
+
+    if not participants and (not first_name or not last_name):
+        response = RedirectResponse(url=redirect_url, status_code=302)
+        response.set_cookie(key="flash_message", value="Invalid Input")
+        return response
+
+    if participants:
+        participants = tournaments.get_tournament_participants_by_id(
+            session, participants
+        )
+    else:
+        try:
+            participant = Participant(first_name=first_name, last_name=last_name)
+        except ValidationError as e:
+            response = RedirectResponse(url=redirect_url, status_code=302)
+            response.set_cookie(key="flash_message", value=f"{e}")
+            return response
+
+        participants = [participant]
+
+    result = tournaments.add_participants(session, tournament_id, participants)
+    flash_message = " | ".join(
+        f"{participant['first_name']} {participant['last_name']} {participant['status'].lower()}"
+        for participant in result.values()
+    )
+
+    response = RedirectResponse(
+        url=f"/tournament/{tournament_id}/add_participant", status_code=302
+    )
+    response.set_cookie(key="flash_message", value=flash_message)
     return response
