@@ -425,6 +425,8 @@ def update_tournament(
     tournament = get_tournament(db_session=db_session, tournament_id=tournament_id)
 
     if data.name:
+        if tournament_name_exists(db_session, data.name) and tournament.name != data.name:
+            raise InvalidRequest(f"Tournament with name {data.name!r} already exists")
         tournament.name = data.name
     if data.start_time:
         for match in tournament.matches:
