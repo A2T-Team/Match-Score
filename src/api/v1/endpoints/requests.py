@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/create")
+@router.post("/")
 def create_request(request: CreateRequest,
                    db: Session = Depends(get_db),
                    current_user: User = Depends(get_current_user),
