@@ -218,21 +218,21 @@ def update_player_stats_after_match(db: Session, match_id: uuid.UUID, current_us
                 player_1.wins += 1
                 player_2.losses += 1
                 participant_1.score += tournament.win_points
-                # participant_1.stage += 1
-                # if not next_match.player_a:
-                #     next_match.player_a = player_1.id
-                # else:
-                #     next_match.player_b = player_1.id
+                participant_1.stage += 1
+                if not next_match.player_a:
+                    next_match.player_a = player_1.id
+                else:
+                    next_match.player_b = player_1.id
 
             elif match.result_code == 2:
                 player_1.losses += 1
                 player_2.wins += 1
                 participant_2.score += tournament.win_points
-                # participant_2.stage += 1
-                # if not next_match.player_a:
-                #     next_match.player_a = player_2.id
-                # else:
-                #     next_match.player_b = player_2.id
+                participant_2.stage += 1
+                if not next_match.player_a:
+                    next_match.player_a = player_2.id
+                else:
+                    next_match.player_b = player_2.id
 
             else:
                 player_1.draws += 1
