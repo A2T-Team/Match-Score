@@ -34,13 +34,7 @@ def post_match(request: CreateMatchRequest, db: Session = Depends(get_db), curre
     #return MatchResponse.model_validate(new_match)
 
 
-@router.get("/{match_id}") #, response_model=MatchResponse
-def get_match(match_id: uuid.UUID, db: Session = Depends(get_db)):
-    return matches.read_match_by_id(db, match_id)
-    #return MatchResponse.model_validate(match)
-
-
-@router.get("/")#, response_model=list[MatchResponse]
+@router.get("/matches")#, response_model=list[MatchResponse]
 def get_all_matches(
     tournament_id: uuid.UUID = None,
     sort_by_date: bool = False,
@@ -48,6 +42,12 @@ def get_all_matches(
 ):
     all_matches = matches.read_all_matches(db, tournament_id=tournament_id, sort_by_date=sort_by_date)
     return [match for match in all_matches]
+
+@router.get("/{match_id}") #, response_model=MatchResponse
+def get_match(match_id: uuid.UUID, db: Session = Depends(get_db)):
+    return matches.read_match_by_id(db, match_id)
+    #return MatchResponse.model_validate(match)
+
 
 # @router.patch("/{match_id}", response_model=MatchResponse)
 # def update_match(match_id: uuid.UUID, updates: MatchUpdate, db: Session = Depends(get_db)):
@@ -84,7 +84,7 @@ def delete_match(match_id: uuid.UUID, db: Session = Depends(get_db), current_use
         return ForbiddenAccess()
     return matches.delete_match(db, match_id, current_user)
 
-@router.post("/match/{match_id}/update_stats", status_code=status.HTTP_200_OK)
+@router.put("/match/{match_id}/update_stats", status_code=status.HTTP_200_OK)
 def put_player_stats(match_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if current_user is None:
         return Unauthorized(content="The user is not authorized to perform this action")
