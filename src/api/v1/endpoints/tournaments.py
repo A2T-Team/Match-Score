@@ -69,7 +69,7 @@ def create_tournament(
     except IntegrityError as e:
         if isinstance(e.orig, UniqueViolation):
             if "tournaments_name_key" in str(e.orig):
-                return AlreadyExists(f"Tournament with name '{new_tournament.name}'")
+                return AlreadyExists(f"Tournament with name '{tournament.name}'")
             else:
                 return InternalServerError(
                     f"An unexpected integrity error occurred: {str(e)}"
