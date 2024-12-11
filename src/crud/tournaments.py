@@ -304,6 +304,29 @@ def get_tournament_participant(
     return tournament_participant
 
 
+def get_tournament_participants_by_id(
+    db_session: Session,
+    participant_ids: list[UUID],
+) -> list[Participant]:
+    """
+    The function takes a list of participant IDs and converts them
+    to a list of Participant
+    """
+    participants = []
+    for participant_id in participant_ids:
+        db_player = db_session.query(Player).filter_by(id=participant_id).first()
+        if db_player is None:
+            continue
+        participants.append(
+            Participant(
+                first_name=db_player.first_name,
+                last_name=db_player.last_name,
+            )
+        )
+
+    return participants
+
+
 def delete_players(
     db_session: Session, tournament_id: UUID, participants: list[Participant]
 ) -> dict[str, dict[str, str]]:

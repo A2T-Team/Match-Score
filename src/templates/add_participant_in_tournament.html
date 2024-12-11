@@ -25,12 +25,8 @@
     <div class="card-header text-center bg-dark text-white">
         <strong>Select Available Player</strong>
     </div>
-    <div class="content-section">
-        <form method="POST" action="/tournament/{{tournament.id}}/submit_update">
-            <div class="form-group mb-3">
-                <label for="name">Select Name</label>
-                <input type="text" id="name" name="name" class="form-control" placeholder="Enter name" value="{{ tournament.name }}">
-            </div>
+    <div class="content-section mx-3">
+        <form method="POST" action="/tournament/{{tournament.id}}/submit_add_participant">
             <div class="form-group">
                 <label for="participants">Select Players</label>
                 <select multiple class="form-control" id="participants" name="participants" multiple>
@@ -39,7 +35,7 @@
                     {% endfor %}
                 </select>
               </div>
-            <button type="submit" class="btn btn-dark my-2">Add Participant</button>
+            <button type="submit" class="btn btn-dark my-2">Add Participant(s)</button>
         </form>
     </div>
 </div>
@@ -48,15 +44,15 @@
     <div class="card-header text-center bg-dark text-white">
         <strong>Add New Player</strong>
     </div>
-    <div class="content-section">
-        <form method="POST" action="/tournament/{{tournament.id}}/submit_update">
+    <div class="content-section mx-3">
+        <form method="POST" action="/tournament/{{tournament.id}}/submit_add_participant">
             <div class="form-group mb-3">
-                <label for="name">First Name</label>
-                <input type="text" id="name" name="name" class="form-control" placeholder="Enter name" value="{{ tournament.name }}">
+                <label for="first_name">First Name</label>
+                <input type="text" id="first_name" name="first_name" class="form-control" placeholder="First name">
             </div>
             <div class="form-group mb-3">
-                <label for="name">Last Name</label>
-                <input type="text" id="name" name="name" class="form-control" placeholder="Enter name" value="{{ tournament.name }}">
+                <label for="last_name">Last Name</label>
+                <input type="text" id="last_name" name="last_name" class="form-control" placeholder="Last name">
             </div>
             
             <button type="submit" class="btn btn-dark my-2">Add Participant</button>
