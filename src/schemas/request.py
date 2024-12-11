@@ -11,9 +11,9 @@ class CreateRequest(BaseModel):
     Schema for creating a new request.
     """
 
-    reason: str = Field(min_length=10, max_length=100, examples=["If you want to link your account to a player,"
-                                                                 " write only the player's firstname"
-                                                                 " and lastname here."])
+    reason: str = Field(min_length=5, max_length=100, examples=["If you want to link your account to a player,"
+                                                                " write only the player's firstname"
+                                                                " and lastname here."])
 
     @field_validator("reason")
     def validate_request_reason(cls, value):

@@ -40,6 +40,9 @@ def creating_request(db: Session, request: CreateRequest, current_user: User, r_
     if current_user is None:
         return Unauthorized()
 
+    if current_user.role == Role.ADMIN:
+        return BadRequest("Admins cannot make requests")
+
     db_request = Requests(
         user_id=current_user.id,
         type=r_type,
@@ -198,7 +201,7 @@ def accept_request(db, request: Requests) -> (str |
         update_player_with_user(db, player.id, request.user_id)
 
     if request.type == RequestType.UNLINK:
-        player = db.query(Player).filter(Player.user_id==request.user_id).first()
+        player = db.query(Player).filter(Player.user_id == request.user_id).first()
         player.user_id = None
 
     request.status = RequestStatus.ACCEPTED

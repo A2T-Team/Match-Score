@@ -5,6 +5,7 @@ from starlette.responses import JSONResponse
 class BadRequest(JSONResponse):
     def __init__(self, content=""):
         super().__init__(status_code=400, content={"detail": content})
+        self.content = content
 
 
 class Locked(JSONResponse):
