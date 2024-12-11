@@ -17,35 +17,35 @@ from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+requests_router = APIRouter(prefix="/requests", tags=["requests"])
 templates = Jinja2Templates(directory="src/templates")
 
 
-@router.get("/", response_class=HTMLResponse)
-async def view_requests_by_status(request: Request,
-                                   db: Session = Depends(get_db),
-                                   current_user: User = Depends(get_current_user),
-                                   search: Optional[RequestStatus] = Query(RequestStatus.PENDING,
-                                                                           alias='status',
-                                                                           description='Filter requests by status')):
+@requests_router.get("/")
+def view_requests_by_status(request: Request,
+                            db: Session = Depends(get_db),
+                            current_user: User = Depends(get_current_user),
+                            search: Optional[RequestStatus] = Query(RequestStatus.PENDING,
+                                                                    alias='status',
+                                                                    description='Filter requests by status')):
     requests = view_requests(db, current_user, search)
     return templates.TemplateResponse("view_requests.html", {"request": request, "requests": requests})
 
 
-@router.post("/", response_class=HTMLResponse)
-async def create_request(request: CreateRequest,
-                         db: Session = Depends(get_db),
-                         current_user: User = Depends(get_current_user),
-                         r_type: RequestType = Query(RequestType.PROMOTE, alias='type', description='Type of request')):
+@requests_router.post("/")
+def create_request(request: CreateRequest,
+                   db: Session = Depends(get_db),
+                   current_user: User = Depends(get_current_user),
+                   r_type: RequestType = Query(RequestType.PROMOTE, alias='type', description='Type of request')):
     creating_request(db, request, current_user, r_type)
     return templates.TemplateResponse("create_request.html", {"request": request})
 
 
-@router.get("/{request_id}", response_class=HTMLResponse)
-async def open_by_id(request: Request,
-                     request_id: UUID,
-                     db: Session = Depends(get_db),
-                     current_user: User = Depends(get_current_user),
-                     action: Optional[RequestAction] = Query(None, alias='action', description='Action to be taken on request')):
+@requests_router.get("/{request_id}")
+def open_by_id(request: Request,
+               request_id: UUID,
+               db: Session = Depends(get_db),
+               current_user: User = Depends(get_current_user),
+               action: Optional[RequestAction] = Query(None, alias='action', description='Action to be taken on request')):
     request_details = open_request(db, request_id, current_user, action)
     return templates.TemplateResponse("open_request.html", {"request": request, "request_details": request_details})
