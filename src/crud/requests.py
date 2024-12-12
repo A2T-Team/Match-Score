@@ -62,7 +62,7 @@ def creating_request(db: Session, request: CreateRequest, current_user: User, r_
         if not re.match(r"[a-zA-Z]+\s[a-zA-Z]+", request.reason):
             return BadRequest("Invalid player name format")
 
-        firstname, lastname = request.reason.split(" ")
+        firstname, lastname = request.reason.split()
         player = db.query(Player).filter(Player.first_name == firstname, Player.last_name == lastname).first()
 
         if not player:
