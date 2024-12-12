@@ -25,7 +25,7 @@ class Player(Base):
     matches_played = Column(Integer, default=0, nullable=True)
     wins = Column(Integer, default=0, nullable=True)
     losses = Column(Integer, default=0, nullable=True)
-    draws = Column(Integer, default=0, nullable=True))
+    draws = Column(Integer, default=0, nullable=True)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=True)
 
     matches_as_a = relationship("Match", foreign_keys="Match.player_a_id", back_populates="player_a", lazy='dynamic')
