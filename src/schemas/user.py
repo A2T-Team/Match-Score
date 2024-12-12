@@ -120,7 +120,6 @@ class UpdateUserRequest(BaseModel):
     """
 
     email: Optional[str] = Field(min_length=6, max_length=50, examples=["johndoe@gmail.com"])
-    role: Optional[str] = Field(examples=["user", "player", "director", "admin"])
 
     @field_validator("email")
     def validate_email(cls, value):
@@ -131,15 +130,4 @@ class UpdateUserRequest(BaseModel):
 
         if not re.match(r"[^@]+@[^@]+\.[^@]+", value):
             raise ValueError("Invalid email address")
-        return value
-
-    @field_validator("role")
-    def validate_role(cls, value):
-
-        """
-        Validate role to be one of the predefined roles.
-        """
-
-        if value not in ["user", "player", "director", "admin"]:
-            raise ValueError("Invalid role")
         return value

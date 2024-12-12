@@ -17,7 +17,6 @@ class Role(PyEnum):
     """
 
     USER = "user"
-    PLAYER = "player"
     DIRECTOR = "director"
     ADMIN = "admin"
 

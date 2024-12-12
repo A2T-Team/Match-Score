@@ -8,7 +8,7 @@ import logging
 
 from src.core.auth import get_current_user
 
-from src.models.user import User
+from src.models.user import User, Role
 from src.schemas.user import (CreateUserRequest, UpdateUserRequest, LoginRequest,
                               UpdateEmailRequest)
 
@@ -64,8 +64,9 @@ def update_my_email(new: UpdateEmailRequest, db: Session = Depends(get_db), curr
 def update_user_credentials(new: UpdateUserRequest, db: Session = Depends(get_db),
                             current_user: User = Depends(get_current_user),
                             username: str = Query(None, min_length=3, max_length=50,
-                            description="Update user by username")):
-    new_credentials = update_user(db, new, username, current_user)
+                            description="Update user by username"),
+                            new_role: Optional[Role] = Query(None, description="Update user role")):
+    new_credentials = update_user(db, new, username, current_user, new_role)
     return new_credentials
 
 

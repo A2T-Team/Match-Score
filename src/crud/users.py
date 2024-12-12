@@ -298,12 +298,13 @@ def update_email(db: Session, new_email: UpdateEmailRequest, current_user: User)
     return UserResponse(username=current_user.username, email=current_user.email, role=current_user.role)
 
 
-def update_user(db: Session, new: UpdateUserRequest, user_to_update: str, current_user: User) -> (UserResponse |
-                                                                                                  AlreadyExists |
-                                                                                                  Unauthorized |
-                                                                                                  NotFound |
-                                                                                                  ForbiddenAccess |
-                                                                                                  BadRequest):
+def update_user(db: Session, new: UpdateUserRequest,
+                user_to_update: str, current_user: User, new_role) -> (UserResponse |
+                                                                       AlreadyExists |
+                                                                       Unauthorized |
+                                                                       NotFound |
+                                                                       ForbiddenAccess |
+                                                                       BadRequest):
     """
     Update a user's details in the database.
 
@@ -312,6 +313,7 @@ def update_user(db: Session, new: UpdateUserRequest, user_to_update: str, curren
         new (UpdateUserRequest): Contains new details for the user.
         user_to_update (str): The username of the user to update.
         current_user (User): The user making the request.
+        new_role (Role): The new role to assign to the user.
 
     Returns:
         UserResponse: The updated user details.
@@ -333,14 +335,8 @@ def update_user(db: Session, new: UpdateUserRequest, user_to_update: str, curren
             return AlreadyExists(content="Email")
         db_user.email = new.email
 
-    if new.role == "admin":
-        db_user.role = Role.ADMIN
-    elif new.role == "director":
-        db_user.role = Role.DIRECTOR
-    elif new.role == "player":
-        db_user.role = Role.PLAYER
-    elif new.role == "user":
-        db_user.role = Role.USER
+    if new_role:
+        db_user.role = new_role
 
     db.commit()
     db.refresh(db_user)
@@ -391,11 +387,11 @@ def delete_user(db: Session, username: str, current_user: User) -> (str | NotFou
         for tournament in tournaments:
             tournament.author_id = current_user.id
 
-    matches = db.query(Match).filter(Match.author_id == user.id).all()
-
-    if matches:
-        for match in matches:
-            match.author_id = current_user.id
+    # matches = db.query(Match).filter(Match.author_id == user.id).all()
+    #
+    # if matches:
+    #     for match in matches:
+    #         match.author_id = current_user.id
 
     db.delete(user)
     db.commit()
