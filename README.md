@@ -98,7 +98,7 @@ pytest
     {
       "first_name": "John",
       "last_name": "Doe",
-      "country": "USA",
+      "country": "USA"
     }
     ```
   - **Description:** Registers a new player with the provided details. Only accessible by `ADMIN` or `DIRECTOR`.
@@ -121,7 +121,7 @@ pytest
     {
       "first_name": "Jane",
       "last_name": "Doe",
-      "country": "USA",
+      "country": "USA"
     }
     ```
   - **Description:** Updates an existing player's information. Only accessible by `ADMIN` or `DIRECTOR`.
@@ -354,17 +354,18 @@ pytest
 
 ### Request Management
 
-- **Get All Requests**
-  - **URL:** `/api/v1/requests/create`
+- **View Requests**
+  - **URL:** `/api/v1/requests/`
   - **Method:** `GET`
   - **Headers:** `Authorization: Bearer <JWT_TOKEN>`
-  - **Description:** Retrieves a list of all requests (e.g., player promotion).
+  - **Description:** Retrieves a list of all requests. Admin can filter with search by `request status`. Only accessible by `ADMIN`.
   - **Response:**
-    - `200 OK`: List of `RequestResponse` objects.
+    - `200 OK`: List of `Request` objects.
 
 - **Create Request**
-  - **URL:** `/api/v1/requests/create`
+  - **URL:** `/api/v1/requests/`
   - **Method:** `POST`
+  - **Headers:** `Authorization: Bearer <JWT_TOKEN>`
   - **Body:**
     ```json
     {
@@ -372,7 +373,7 @@ pytest
       "request_reason": "If you want to link your account to a player, write only the player's firstname and lastname here."
     }
     ```
-  - **Description:** Creates a new request. Only accessible by `ADMIN` or `DIRECTOR`.
+  - **Description:** Creates a new request. Only accessible by `USER` or `DIRECTOR`.
   - **Response:**
     - `201 Created`: The created `Request` object.
 
@@ -380,25 +381,9 @@ pytest
   - **URL:** `/api/v1/requests/{request_id}`
   - **Method:** `GET`
   - **Headers:** `Authorization: Bearer <JWT_TOKEN>`
-  - **Description:** Retrieves a specific request by id.
+  - **Description:** Retrieves a request by its ID. Admin can choose to accept or reject the request. Only accessible by `ADMIN`.
   - **Response:**
-    - `200 OK`: List of `RequestResponse` objects.
-
-- **Accept Request**
-  - **URL:** `/api/v1/requests/{request_id}/accept`
-  - **Method:** `PUT`
-  - **Headers:** `Authorization: Bearer <JWT_TOKEN>`
-  - **Description:** Accept a request by id.
-  - **Response:**
-    - `200 OK`.
-
-- **Reject Request**
-  - **URL:** `/api/v1/requests/{request_id}/reject`
-  - **Method:** `DELETE`
-  - **Headers:** `Authorization: Bearer <JWT_TOKEN>`
-  - **Description:** Reject a request by id.
-  - **Response:**
-    - `200 OK`.
+    - `200 OK`: The `Request` object.
 
 ### Authentication
 
@@ -442,42 +427,41 @@ pytest
 - **View All Users**
   - **URL:** `/api/v1/users/`
   - **Method:** `GET`
-  - **Description:** Retrives all users. Only accessible by `ADMIN`.
+  - **Description:** Retrives all users. Can search by `username` or `email`. can set a limit.
   - **Response:**
-    - `200 OK`: List of 'User' objects.
+    - `200 OK`: List of `User` objects.
 
-- **Search User by username**
-  - **URL:** `/api/v1/users/{username}`
-  - **Method:** `GET`
-  - **Description:** Retrives a user by username. Only accessible by `ADMIN`.
-  - **Response:**
-    - `200 OK`: a 'User' object.
+- **View Current User**
+- **URL:** `/api/v1/users/me`
+- **Method:** `GET`
+- **Description:** Retrieves the current user's information.
+- **Response:**
+  - `200 OK`: The `User` object.
 
-- **Search User by email**
-  - **URL:** `/api/v1/users/{email}`
-  - **Method:** `GET`
-  - **Description:** Retrives a user by email. Only accessible by `ADMIN`.
-  - **Response:**
-    - `200 OK`: a 'User' object.
-
-- **My profile**
-  - **URL:** `/api/v1/users/me`
-  - **Method:** `GET`
-  - **Description:** Retrives your profile.
-  - **Response:**
-    - `200 OK`: a 'User' object.
-
-- **Update My Email**
-  - **URL:** `/api/v1/users/me/email/update`
-  - **Method:** `PUT`
-  - **Description:** Updates personal email.
-  - **Response:**
-    - `200 OK`
+- **Update Current User Email**
+- **URL:** `/api/v1/users/me/email`
+- **Method:** `PUT`
+- **Body:**
+  ```json
+  {
+    "email": "johndoe@gmail.com"
+    }
+    ```
+- **Description:** Updates the current user's email.
+- **Response:**
+  - `200 OK`: The updated `User` object.
 
 - **Update User Credentials**
-  - **URL:** `/api/v1/users/{username}/update`
+  - **URL:** `/api/v1/users/`
   - **Method:** `PUT`
-  - **Description:** Updates users credentials. Only accessible by `ADMIN`.
+  - **Description:** Updates users credentials. Search by username. Only accessible by `ADMIN`.
+  - **Body:**
+    ```json
+    {
+    "email": "johmdoe@gmail.com",
+    "role": "user"
+    }
+    ```
   - **Response:**
     - `200 OK`
 
