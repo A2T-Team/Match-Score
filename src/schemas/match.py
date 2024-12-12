@@ -11,7 +11,6 @@ class CreateMatchRequest(BaseModel):
     start_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM'"])
     end_time: datetime = Field(examples=["Format must be 'YYYY/MM/DD HH:MM'"])
     prize: Optional[int] = Field(description="Prize for the match, must be 0 or positive")
-    #author_id: uuid.UUID = Field(description="Author ID")
     tournament_id: Optional[uuid.UUID] = Field(description="Tournament ID")
     stage: Optional[int] = Field(description="Stage if in tournament")
     serial_number: Optional[int] = Field(description="Serial number if in tournament")
@@ -88,13 +87,6 @@ class CreateMatchRequest(BaseModel):
         if value == "":
             return None
         return value
-# class MatchUpdate(BaseModel):
-#     score_a: Optional[int] = None
-#     score_b: Optional[int] = None
-#     result_code: Optional[str] = None
-#     start_time: Optional[datetime] = None
-#     end_time: Optional[datetime] = None
-#     prize: Optional[int] = None
 
 class MatchResult(BaseModel):
     score_a: int = Field(description="Score for Player A")
@@ -156,7 +148,3 @@ class MatchResponse(CreateMatchRequest):
     tournament_id: Optional[uuid.UUID]
     stage: Optional[int]
     serial_number: Optional[int]
-
-    # model_config = {
-    #     "from_attributes": True,  # Enables ORM mode
-    # }

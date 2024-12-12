@@ -2,16 +2,13 @@ from src.models.base import Base
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import (
-    Boolean,
     Column,
     DateTime,
-    Enum,
     ForeignKey,
     Integer,
-    String,
-    Text,
+    String
 )
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import relationship
 
 
 class Match(Base):
@@ -34,7 +31,7 @@ class Match(Base):
     start_time = Column(DateTime)
     end_time = Column(DateTime)
     prize = Column(Integer)
-    author_id = Column(UUID,  nullable=True) #ForeignKey("users.id"),
+    author_id = Column(UUID,  nullable=True)
     tournament_id = Column(UUID, ForeignKey("tournaments.id"))
     stage = Column(Integer)
     serial_number = Column(Integer) 
@@ -43,7 +40,6 @@ class Match(Base):
     player_a = relationship("Player", foreign_keys=[player_a_id], back_populates="matches_as_a", lazy='select')
     player_b = relationship("Player", foreign_keys=[player_b_id], back_populates="matches_as_b", lazy='select')
     match_format = relationship("MatchFormat", back_populates="matches")
-    #author = relationship("User", back_populates="match")
     result = relationship("ResultCodes", back_populates="match")
 
 class MatchFormat(Base):

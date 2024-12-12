@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from src.api.deps import get_db
 from src.schemas.player import CreatePlayerRequest, PlayerResponse, ParticipantResponse, PlayerUpdate
@@ -7,13 +7,8 @@ from uuid import UUID
 from src.core.auth import get_current_user
 from src.models.user import User, Role
 from src.common.custom_responses import (
-    AlreadyExists,
-    InternalServerError,
-    NotFound,
-    OK,
     Unauthorized,
-    ForbiddenAccess,
-    BadRequest,
+    ForbiddenAccess
 )
 
 router = APIRouter()
