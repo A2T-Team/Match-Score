@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Details</title>
+</head>
+<body>
+    <h1>Request Details</h1>
+    <p>Request ID: {request_id}</p>
+    <p>Status: {status}</p>
+    <p>Details: {details}</p>
+
+    <form method="post" action="/{request_id}">
+        <label for="action">Action:</label>
+        <select id="action" name="action">
+            <option value="ACCEPT">Accept</option>
+            <option value="REJECT">Reject</option>
+        </select>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>

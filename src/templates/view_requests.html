@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Requests</title>
+</head>
+<body>
+    <h1>Requests</h1>
+    <form method="get" action="/">
+        <label for="status">Filter by Status:</label>
+        <select id="status" name="status">
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+    <ul>
+        <!-- Assume dynamic rendering of requests -->
+        <li><a href="/{request_id}">Request 1</a> - Status: Pending</li>
+        <li><a href="/{request_id}">Request 2</a> - Status: Approved</li>
+    </ul>
+</body>
+</html>
