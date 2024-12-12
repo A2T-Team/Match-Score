@@ -12,6 +12,7 @@ from src.models.user import User, Role
 from src.models.request import Requests
 from src.models.player import Player
 from src.models.tournament import Tournament
+from src.models.match import Match
 
 from src.schemas.user import (CreateUserRequest, LoginRequest, UserResponse, UpdateEmailRequest, UpdateUserRequest)
 
@@ -389,6 +390,12 @@ def delete_user(db: Session, username: str, current_user: User) -> (str | NotFou
     if tournaments:
         for tournament in tournaments:
             tournament.author_id = current_user.id
+
+    matches = db.query(Match).filter(Match.author_id == user.id).all()
+
+    if matches:
+        for match in matches:
+            match.author_id = current_user.id
 
     db.delete(user)
     db.commit()
